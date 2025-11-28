@@ -6,7 +6,7 @@
   "publisher": "spellbook",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mouadenna/spellbook"
+    "url": "https://github.com/MouadAssouam/Spellbook"
   },
   "engines": {
     "vscode": "^1.85.0"
