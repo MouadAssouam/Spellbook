@@ -410,9 +410,9 @@ Same input always produces identical output (deterministic).
 
 ## Need Help?
 
-- Check the [main README](../../README.md) for project overview
-- See [examples/](../../examples/) for more spell definitions
-- See [.kiro/KIRO-USAGE.md](../../.kiro/KIRO-USAGE.md) for how this was built
+- Check the [main README](https://github.com/MouadAssouam/Spellbook#readme) for project overview
+- See [examples/](https://github.com/MouadAssouam/Spellbook/tree/main/examples) for more spell definitions
+- See [KIRO-USAGE.md](https://github.com/MouadAssouam/Spellbook/blob/main/.kiro/KIRO-USAGE.md) for how this was built
 
 ---
 
