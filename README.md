@@ -90,7 +90,7 @@ Spellbook is a **domain-specific compiler** for MCP tools:
 
 ### VS Code Extension (.vsix)
 
-1. Download `spellbook-vscode-0.1.0.vsix` from [Releases](https://github.com/mouadenna/spellbook/releases)
+1. Download `spellbook-vscode-0.1.0.vsix` from [Releases](https://github.com/MouadAssouam/Spellbook/releases)
 2. Open VS Code / Kiro / Cursor / Windsurf
 3. Go to Extensions (`Ctrl+Shift+X`)
 4. Click `...` → **Install from VSIX...**
