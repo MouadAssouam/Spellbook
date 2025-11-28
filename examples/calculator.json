@@ -1,0 +1,24 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440003",
+  "name": "calculator",
+  "description": "Performs basic arithmetic operations on two numbers. Supports addition, subtraction, multiplication, and division with proper error handling for division by zero.",
+  "action": {
+    "type": "script",
+    "config": {
+      "runtime": "node",
+      "code": "const { a, b, operation } = input;\nswitch (operation) {\n  case 'add': return { result: a + b };\n  case 'subtract': return { result: a - b };\n  case 'multiply': return { result: a * b };\n  case 'divide': return { result: b !== 0 ? a / b : 'Error: Division by zero' };\n  default: return { error: 'Invalid operation' };\n}"
+    }
+  },
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "a": { "type": "number" },
+      "b": { "type": "number" },
+      "operation": { "type": "string" }
+    },
+    "required": ["a", "b", "operation"]
+  },
+  "outputSchema": {
+    "type": "object"
+  }
+}

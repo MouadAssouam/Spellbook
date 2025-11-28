@@ -1,0 +1,38 @@
+{
+  "name": "@spellbook/core",
+  "version": "0.1.0",
+  "description": "Core types, templates, and generator for Spellbook MCP tool builder",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "spellbook-mcp": "./dist/spellbook-mcp.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "mcp",
+    "spellbook",
+    "generator"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "fast-check": "^4.3.0"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "generated_at": "2025-11-27T14:40:00.000Z",
+  "project": "Spellbook",
+  "version": "0.1.0",
+  "kiro_features_used": {
+    "specs": 10,
+    "steering": 1,
+    "vibe_coding": true,
+    "context_file": true,
+    "context_folder": true,
+    "mcp_tools": 1,
+    "hooks": 3
+  },
+  "code_metrics": {
+    "total_lines": 2800,
+    "source_lines": 1400,
+    "test_lines": 1400,
+    "kiro_generated_percentage": 81
+  },
+  "test_metrics": {
+    "total_tests": 63,
+    "property_tests": 45,
+    "unit_tests": 18,
+    "test_files": 5,
+    "all_passing": true
+  },
+  "time_metrics": {
+    "total_hours": 11.33,
+    "manual_estimate_hours": 45,
+    "time_saved_hours": 33.67,
+    "efficiency_gain_percentage": 75
+  },
+  "milestones": {
+    "total": 10,
+    "completed": 10,
+    "completion_percentage": 100
+  },
+  "bugs_fixed": {
+    "critical": 1,
+    "high": 1,
+    "medium": 2,
+    "total": 4
+  },
+  "files_generated_per_spell": {
+    "dockerfile": 1,
+    "package_json": 1,
+    "index_js": 1,
+    "readme_md": 1,
+    "total": 4
+  },
+  "dependencies": {
+    "runtime": ["@modelcontextprotocol/sdk", "ajv", "zod"],
+    "dev": ["typescript", "vitest", "fast-check", "@types/node"]
+  }
+}

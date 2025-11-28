@@ -1,0 +1,23 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440002",
+  "name": "weather-api",
+  "description": "Fetches current weather data for a given city. Returns temperature, conditions, humidity, and wind speed from OpenWeatherMap API.",
+  "action": {
+    "type": "http",
+    "config": {
+      "url": "https://api.openweathermap.org/data/2.5/weather?q={{city}}&appid={{apiKey}}",
+      "method": "GET"
+    }
+  },
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "city": { "type": "string" },
+      "apiKey": { "type": "string" }
+    },
+    "required": ["city", "apiKey"]
+  },
+  "outputSchema": {
+    "type": "object"
+  }
+}

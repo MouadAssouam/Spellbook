@@ -1,0 +1,89 @@
+{
+  "name": "spellbook-vscode",
+  "displayName": "Spellbook - MCP Tool Builder",
+  "description": "Visual MCP tool builder for VS Code and all forks",
+  "version": "0.1.0",
+  "publisher": "spellbook",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mouadenna/spellbook"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "icon": "logo.jpg",
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "spellbook-sidebar",
+          "title": "Spellbook",
+          "icon": "resources/spellbook-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "spellbook-sidebar": [
+        {
+          "type": "webview",
+          "id": "spellbook.grimoireView",
+          "name": "Grimoire"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "spellbook.createSpell",
+        "title": "Spellbook: Create MCP Tool",
+        "icon": "$(add)"
+      },
+      {
+        "command": "spellbook.openGrimoire",
+        "title": "Spellbook: Open Grimoire",
+        "icon": "$(book)"
+      },
+      {
+        "command": "spellbook.refreshSpells",
+        "title": "Refresh Spells",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "spellbook.openGrimoire",
+          "when": "view == spellbook.grimoireView",
+          "group": "navigation"
+        },
+        {
+          "command": "spellbook.refreshSpells",
+          "when": "view == spellbook.grimoireView",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "spellbook.createSpell",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "compile": "npm run esbuild-base -- --sourcemap",
+    "watch": "npm run esbuild-base -- --sourcemap --watch",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.20.2"
+  }
+}

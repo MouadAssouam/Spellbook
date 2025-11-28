@@ -1,0 +1,40 @@
+{
+  "name": "spellbook",
+  "version": "0.1.0",
+  "description": "Visual MCP tool builder for VS Code and all forks (Kiro, Cursor, Windsurf, etc.)",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "extensions/*"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "metrics": "node scripts/generate-metrics.js",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "mcp",
+    "vscode",
+    "extension",
+    "kiro",
+    "cursor",
+    "ai",
+    "tool-builder"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "fast-check": "^4.3.0",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.22.0"
+  }
+}

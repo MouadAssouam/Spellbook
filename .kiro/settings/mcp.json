@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "spellbook": {
+      "command": "node",
+      "args": ["./packages/core/dist/spellbook-mcp.js"],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

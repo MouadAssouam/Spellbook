@@ -1,0 +1,20 @@
+.vscode/**
+.vscode-test/**
+src/**
+**/*.ts
+**/*.map
+.gitignore
+tsconfig.json
+tsconfig.tsbuildinfo
+node_modules/**
+../../**
+../**
+*.vsix
+esbuild.js
+# Exclude tsc output subdirs (we only need bundled dist/extension.js)
+dist/commands/**
+dist/providers/**
+dist/utils/**
+dist/webview/**
+dist/*.d.ts
+dist/*.d.ts.map
