@@ -152,7 +152,27 @@ npm run package
 
 ### MCP Tool (Meta Mode)
 
-Add Spellbook to your `.kiro/settings/mcp.json`:
+**Option A: Via npx (no install needed)**
+
+Add to your `.kiro/settings/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "spellbook": {
+      "command": "npx",
+      "args": ["spellbook-mcp"]
+    }
+  }
+}
+```
+
+**Option B: From source**
+
+```bash
+git clone https://github.com/MouadAssouam/Spellbook.git
+cd Spellbook && npm install && npm run build
+```
 
 ```json
 {
