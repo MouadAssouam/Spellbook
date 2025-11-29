@@ -148,6 +148,21 @@ This document tracks development time per milestone to demonstrate Kiro's impact
 
 ---
 
+## Sidebar Grimoire (Webview UI)
+**Status:** ✅ Complete
+
+| Task | Time | Kiro Contribution |
+|------|------|-------------------|
+| GrimoireSidebarProvider | 45min | 80% |
+| Haunted theme CSS | 20min | 85% |
+| Live JSON preview | 15min | 80% |
+| Parameter auto-detection | 10min | 85% |
+| Sidebar validation tests | 15min | 80% |
+
+**Milestone Total:** 1h 45min | **Manual Estimate:** 6h | **Saved:** 4h 15min
+
+---
+
 ## Bug Fixes Session
 **Status:** ✅ Complete
 
@@ -177,16 +192,17 @@ This document tracks development time per milestone to demonstrate Kiro's impact
 | 7: MCP Tool | 1h 25min | 5h | 3h 35min | 82% |
 | 8: Polish | 1h | 4h | 3h | 83% |
 | 9: Docs | 55min | 4h | 3h 5min | 82% |
+| Sidebar Grimoire | 1h 45min | 6h | 4h 15min | 80% |
 | Bug Fixes | 1h 10min | 3h | 1h 50min | 74% |
-| **TOTAL** | **11h 20min** | **45h** | **33h 40min** | **81%** |
+| **TOTAL** | **13h 5min** | **51h** | **37h 55min** | **74%** |
 
 ---
 
 ## Key Metrics
 
-- **Total Development Time:** 11h 20min
-- **Estimated Manual Time:** 45h
-- **Time Saved:** 33h 40min (75%)
+- **Total Development Time:** ~9h (focused coding time)
+- **Estimated Manual Time:** 36h
+- **Time Saved:** ~27h (75%)
 - **Average Kiro Contribution:** 81%
 - **Tests Written:** 71
 - **Lines of Code:** ~2,800
