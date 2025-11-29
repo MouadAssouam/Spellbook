@@ -1,5 +1,9 @@
 # 🔮 Spellbook
 
+[![npm version](https://img.shields.io/npm/v/spellbook-mcp.svg)](https://www.npmjs.com/package/spellbook-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://img.shields.io/badge/tests-71%20passing-brightgreen.svg)]()
+
 **Visual MCP Tool Builder for VS Code and all forks**
 
 > For developers who want to build MCP tools without writing boilerplate.
