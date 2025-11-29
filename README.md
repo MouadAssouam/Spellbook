@@ -33,14 +33,15 @@ With Spellbook:
 
 **Time: 30 seconds.**
 
-### Two Ways to Use Spellbook
+### Three Ways to Use Spellbook
 
-| Method | Best For |
-|--------|----------|
-| **VS Code Extension** | Visual UI, sidebar, live preview |
-| **MCP Tool** | Conversational creation via Kiro - just ask! |
+| Method | Install | Best For |
+|--------|---------|----------|
+| **npm package** | `npx spellbook-mcp` | Zero setup, works anywhere |
+| **VS Code Extension** | Download .vsix | Visual UI, sidebar, live preview |
+| **MCP Tool** | Add to mcp.json | Conversational creation via Kiro |
 
-With the MCP tool configured, just ask Kiro: *"Create a spell that fetches GitHub issues"* - done. No clicking, no forms.
+**Fastest way:** Just add to your `mcp.json` and ask Kiro to create spells - no clone, no build, no extension needed.
 
 ## 📑 Table of Contents
 
