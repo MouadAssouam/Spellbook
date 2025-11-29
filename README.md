@@ -8,8 +8,31 @@ Build MCP (Model Context Protocol) tools in 30 seconds instead of hours. Works w
 
 <!-- TODO: Add screenshot/GIF of the Haunted Grimoire sidebar here -->
 
+## 😫 The Problem
+
+Creating an MCP tool today requires:
+- Understanding MCP protocol (stdio, JSON-RPC)
+- Setting up Node.js project structure
+- Writing ~100 lines of server boilerplate
+- Handling input validation manually
+- Setting up Docker for deployment
+- Writing documentation
+
+**Time: 2-4 hours per tool** for someone who knows what they're doing.
+
+## ✅ The Solution
+
+With Spellbook:
+1. Fill in name, description, URL or script
+2. Click "Summon"
+3. Get a complete, working MCP server
+
+**Time: 30 seconds.**
+
 ## 📑 Table of Contents
 
+- [The Problem](#-the-problem)
+- [The Solution](#-the-solution)
 - [The Meta Moment](#-the-meta-moment)
 - [Features](#-features)
 - [Project Stats](#-project-stats)
