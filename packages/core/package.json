@@ -1,6 +1,6 @@
 {
   "name": "spellbook-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Core types, templates, and generator for Spellbook MCP tool builder",
   "type": "module",
   "main": "./dist/index.js",
