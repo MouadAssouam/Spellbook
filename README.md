@@ -34,9 +34,9 @@ With Spellbook:
 | Method | Best For |
 |--------|----------|
 | **VS Code Extension** | Visual UI, sidebar, live preview |
-| **MCP Tool (no install)** | Conversational creation via Kiro - just ask! |
+| **MCP Tool** | Conversational creation via Kiro - just ask! |
 
-You don't even need to install the extension. Add Spellbook as an MCP server and ask Kiro: *"Create a spell that fetches GitHub issues"* - done.
+With the MCP tool configured, just ask Kiro: *"Create a spell that fetches GitHub issues"* - done. No clicking, no forms.
 
 ## 📑 Table of Contents
 
