@@ -29,6 +29,15 @@ With Spellbook:
 
 **Time: 30 seconds.**
 
+### Two Ways to Use Spellbook
+
+| Method | Best For |
+|--------|----------|
+| **VS Code Extension** | Visual UI, sidebar, live preview |
+| **MCP Tool (no install)** | Conversational creation via Kiro - just ask! |
+
+You don't even need to install the extension. Add Spellbook as an MCP server and ask Kiro: *"Create a spell that fetches GitHub issues"* - done.
+
 ## 📑 Table of Contents
 
 - [The Problem](#-the-problem)
