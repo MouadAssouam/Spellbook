@@ -137,6 +137,33 @@ Spellbook is a **domain-specific compiler** for MCP tools:
 
 ## 📥 Installation
 
+### npm Package (Fastest)
+
+```bash
+# Use directly with npx (no install needed)
+npx spellbook-mcp
+
+# Or install as a library
+npm install spellbook-mcp
+```
+
+### MCP Tool (Conversational)
+
+Add to your `.kiro/settings/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "spellbook": {
+      "command": "npx",
+      "args": ["spellbook-mcp"]
+    }
+  }
+}
+```
+
+Then ask Kiro: *"Create a spell that fetches GitHub issues"*
+
 ### VS Code Extension (.vsix)
 
 1. Download `spellbook-vscode-0.1.0.vsix` from [Releases](https://github.com/MouadAssouam/Spellbook/releases)
