@@ -52,6 +52,7 @@ With Spellbook:
 - [Project Stats](#-project-stats)
 - [Architecture](#️-architecture)
 - [Installation](#-installation)
+- [Usage Guide](#-usage-guide) ⬅️ **Start here!**
 - [Quick Start](#-quick-start)
 - [Generated Output](#-generated-output)
 - [Example Spells](#-example-spells)
@@ -120,6 +121,17 @@ Spellbook is a **domain-specific compiler** for MCP tools:
 3. **MCP Tool** - `create_spell` and `list_spells` via stdio
 
 **Two-layer validation:** Zod validates at build-time, Ajv validates at runtime in generated servers.
+
+---
+
+## 📖 Usage Guide
+
+**New to Spellbook?** Check out the **[Complete Usage Guide](./USAGE.md)** for step-by-step tutorials on:
+
+- 🎨 **VS Code Extension** — Visual sidebar walkthrough with screenshots
+- 💬 **MCP Tool** — Create spells by chatting with Kiro
+- 📦 **npm Library** — Programmatic integration for your own tools
+- 🧪 **Complete Examples** — Build a Slack notifier from scratch
 
 ---
 

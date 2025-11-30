@@ -130,6 +130,7 @@ Zod schema for spell validation.
 
 ## Links
 
+- [📖 Usage Guide](https://github.com/MouadAssouam/Spellbook/blob/main/USAGE.md) — Step-by-step tutorials
 - [Full Documentation](https://github.com/MouadAssouam/Spellbook)
 - [VS Code Extension](https://github.com/MouadAssouam/Spellbook/releases)
 - [Examples](https://github.com/MouadAssouam/Spellbook/tree/main/examples)
