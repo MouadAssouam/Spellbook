@@ -190,7 +190,7 @@ This tool executes JavaScript code with full Node.js privileges. Only run this t
 This tool makes HTTP requests to external services. The following security measures are in place:
 - Request timeout: 15 seconds
 - Response size limit: 10MB
-- Host allowlist: Configure \`ALLOWED_HOSTS\` or \`ALLOW_ALL_HOSTS\` in index.js for production`;
+- Host allowlist: Edit \`ALLOWED_HOSTS\` in index.js to restrict to specific domains`;
 
   return `# ${spell.name}
 
@@ -234,9 +234,9 @@ ${formatJson(spell.outputSchema)}
 ## Configuration
 
 Edit \`index.js\` to customize:
-- \`ALLOWED_HOSTS\`: Restrict HTTP requests to specific domains (default: ['*'] allows all)
-- \`MAX_RESPONSE_SIZE\`: Adjust response size limit (default: 10MB)
-- Timeout values for HTTP (15s) and script (5s) actions
+- \`ALLOWED_HOSTS\`: Array of allowed domains (default: ['*'] allows all). Example: ['api.github.com']
+- \`MAX_RESPONSE_SIZE\`: Response size limit in bytes (default: 10MB)
+- Timeout: HTTP requests timeout after 15s, scripts after 5s
 `;
 }
 
@@ -311,10 +311,7 @@ function generateActionCode(action: Action): string {
       throw new Error(\`HTTP \${response.status} \${response.statusText}: \${errorBody.slice(0, 500)}\`);
     }
     
-    const text = await response.text();
-    if (text.length > MAX_RESPONSE_SIZE) {
-      throw new Error(\`Response too large: \${text.length} bytes\`);
-    }
+    const text = await readBodyWithLimit(response, MAX_RESPONSE_SIZE);
     
     try {
       return JSON.parse(text);
@@ -379,8 +376,12 @@ function escapeString(str: string): string {
 /**
  * Formats JSON with proper indentation.
  * Used for embedding schemas in generated code.
+ * Returns empty object if undefined/null to prevent invalid JS.
  */
 function formatJson(obj: any): string {
+  if (obj === undefined || obj === null) {
+    return '{}';
+  }
   return JSON.stringify(obj, null, 2);
 }
 
