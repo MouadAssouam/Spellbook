@@ -92,9 +92,9 @@ const outputSchema = ${formatJson(spell.outputSchema)};
 const validateInput = ajv.compile(inputSchema);
 const validateOutput = ajv.compile(outputSchema);
 
-// Security: Allowed hosts for HTTP requests (restrict in production)
-const ALLOWED_HOSTS = ['*']; // Use ['api.github.com'] to restrict to specific hosts
-const MAX_RESPONSE_SIZE = 10 * 1024 * 1024; // 10MB max response
+// Security: Configurable via environment variables
+const ALLOWED_HOSTS = process.env.ALLOWED_HOSTS ? process.env.ALLOWED_HOSTS.split(',').map(h => h.trim()) : ['*'];
+const MAX_RESPONSE_SIZE = parseInt(process.env.MAX_RESPONSE_SIZE) || 10 * 1024 * 1024; // 10MB default
 
 ${needsInterpolation ? generateInterpolateFunction() + '\n' : ''}
 ${needsHttpHelpers ? generateReadBodyWithLimitFunction() + '\n' : ''}
@@ -136,7 +136,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     ${hasOutputSchema ? `if (!validateOutput(result)) {
       const errors = validateOutput.errors?.map(e => \`\${e.instancePath} \${e.message}\`).join(', ');
       throw new Error(\`Output validation failed: \${errors}\`);
-    }` : '// No output schema defined - skipping output validation'}
+    }` : '// Note: No output schema properties defined - skipping output validation'}
     
     return {
       content: [{
@@ -233,10 +233,19 @@ ${formatJson(spell.outputSchema)}
 
 ## Configuration
 
-Edit \`index.js\` to customize:
-- \`ALLOWED_HOSTS\`: Array of allowed domains (default: ['*'] allows all). Example: ['api.github.com']
-- \`MAX_RESPONSE_SIZE\`: Response size limit in bytes (default: 10MB)
-- Timeout: HTTP requests timeout after 15s, scripts after 5s
+Configure via environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| \`ALLOWED_HOSTS\` | \`*\` (all) | Comma-separated list of allowed domains |
+| \`MAX_RESPONSE_SIZE\` | \`10485760\` | Max response size in bytes (10MB) |
+| \`HTTP_TIMEOUT_MS\` | \`15000\` | HTTP request timeout in milliseconds |
+| \`SCRIPT_TIMEOUT_MS\` | \`5000\` | Script execution timeout in milliseconds |
+
+Example:
+\`\`\`bash
+ALLOWED_HOSTS=api.github.com,api.example.com docker run --rm -i ${spell.name}
+\`\`\`
 `;
 }
 
@@ -282,15 +291,19 @@ function generateActionCode(action: Action): string {
       ? `interpolate('${escapeString(url)}', input)`
       : `'${escapeString(url)}'`;
     
-    return `  const timeoutMs = 15000;
+    return `  const timeoutMs = parseInt(process.env.HTTP_TIMEOUT_MS) || 15000;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const targetUrl = ${urlCode};
     
-    // Security: Validate URL host against allowlist
+    // Security: Validate URL protocol and host
     const parsedUrl = new URL(targetUrl);
+    const allowedProtocols = ['http:', 'https:'];
+    if (!allowedProtocols.includes(parsedUrl.protocol)) {
+      throw new Error(\`Protocol not allowed: \${parsedUrl.protocol}. Use http: or https:\`);
+    }
     if (!ALLOWED_HOSTS.includes('*') && !ALLOWED_HOSTS.includes(parsedUrl.host)) {
       throw new Error(\`Host not allowed: \${parsedUrl.host}. Allowed: \${ALLOWED_HOSTS.join(', ')}\`);
     }
@@ -332,7 +345,7 @@ function generateActionCode(action: Action): string {
     return `  // WARNING: Script runs with full Node.js privileges. Only run trusted code.
   // Consider using vm2 or isolated-vm for untrusted scripts in production.
   const fn = new Function('input', ${JSON.stringify(code)});
-  const timeoutMs = 5000;
+  const timeoutMs = parseInt(process.env.SCRIPT_TIMEOUT_MS) || 5000;
   let timeout;
 
   try {
