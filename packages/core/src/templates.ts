@@ -322,7 +322,7 @@ function generateActionCode(action: Action): string {
       return { data: text };
     }
   } catch (err) {
-    if (err && (err as any).name === 'AbortError') {
+    if (err && err.name === 'AbortError') {
       throw new Error(\`Request timed out after \${timeoutMs}ms\`);
     }
     throw err;
