@@ -2,7 +2,7 @@
   "name": "spellbook-vscode",
   "displayName": "Spellbook - MCP Tool Builder",
   "description": "Visual MCP tool builder for VS Code and all forks",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "MouadAssouam",
   "repository": {
     "type": "git",

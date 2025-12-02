@@ -8,7 +8,9 @@
 
 > For developers who want to build MCP tools without writing boilerplate.
 
-Build MCP (Model Context Protocol) tools in 30 seconds instead of hours. Works with VS Code, Kiro, Cursor, Windsurf, and any VS Code fork.
+Build MCP (Model Context Protocol) tools in 30 seconds instead of hours. 
+
+**Optimized for Kiro** — fully tested and working. Support for other VS Code forks (Cursor, Windsurf, etc.) coming soon.
 
 <!-- TODO: Add screenshot/GIF of the Haunted Grimoire sidebar here -->
 
