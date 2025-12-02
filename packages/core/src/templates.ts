@@ -140,8 +140,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     
     return {
       content: [{
-        type: "json",
-        json: result
+        type: "text",
+        text: JSON.stringify(result, null, 2)
       }]
     };
   } catch (error) {
