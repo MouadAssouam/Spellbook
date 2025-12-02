@@ -38,7 +38,7 @@ With Spellbook:
 | Method | Install | Best For |
 |--------|---------|----------|
 | **npm package** | `npx spellbook-mcp` | Zero setup, works anywhere |
-| **VS Code Extension** | Download .vsix | Visual UI, sidebar, live preview |
+| **VS Code Extension** | Search "Spellbook" in Extensions | Visual UI, sidebar, live preview |
 | **MCP Tool** | Add to mcp.json | Conversational creation via Kiro |
 
 **Fastest way:** Just add to your `mcp.json` and ask Kiro to create spells - no clone, no build, no extension needed.
@@ -164,15 +164,29 @@ Add to your `.kiro/settings/mcp.json`:
 
 Then ask Kiro: *"Create a spell that fetches GitHub issues"*
 
-### VS Code Extension (.vsix)
+### VS Code Extension
 
-1. Download `spellbook-vscode-0.1.0.vsix` from [Releases](https://github.com/MouadAssouam/Spellbook/releases)
+**Option A: Install from Marketplace (Recommended)**
+
+1. Open VS Code / Kiro / Cursor / Windsurf
+2. Go to Extensions (`Ctrl+Shift+X`)
+3. Search for **"Spellbook"**
+4. Click **Install**
+
+Or install via command line:
+```bash
+code --install-extension MouadAssouam.spellbook-vscode
+```
+
+**Option B: Download from GitHub**
+
+1. Download `spellbook-vscode-0.1.1.vsix` from [Releases](https://github.com/MouadAssouam/Spellbook/releases)
 2. Open VS Code / Kiro / Cursor / Windsurf
 3. Go to Extensions (`Ctrl+Shift+X`)
 4. Click `...` → **Install from VSIX...**
 5. Select the downloaded `.vsix` file
 
-Or build from source:
+**Option C: Build from source**
 ```bash
 cd extensions/vscode
 npm install
