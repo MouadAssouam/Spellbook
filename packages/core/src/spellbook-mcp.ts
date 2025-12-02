@@ -27,6 +27,8 @@ import {
   ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import { randomUUID } from 'crypto';
+import { mkdir, writeFile } from 'fs/promises';
+import { join } from 'path';
 import { SpellSchema } from './types.js';
 import { generateMCPServer } from './generator.js';
 import { loadSpells, saveSpells } from './storage.js';
@@ -87,6 +89,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
               }
             },
             required: ['type', 'config']
+          },
+          outputDir: {
+            type: 'string',
+            description: 'Optional directory path to write generated files. If provided, files will be written to disk.'
           }
         },
         required: ['name', 'description', 'inputSchema', 'outputSchema', 'action']
@@ -162,16 +168,39 @@ async function handleCreateSpell(args: unknown) {
     spells.set(spell.id, spell);
     await saveSpells(spells);
 
+    // Write files to disk if outputDir is provided
+    const outputDir = (args as { outputDir?: string }).outputDir;
+    let writeStatus = '';
+    
+    if (outputDir) {
+      try {
+        const targetDir = join(outputDir, spell.name);
+        await mkdir(targetDir, { recursive: true });
+        
+        for (const [filename, content] of Object.entries(files)) {
+          await writeFile(join(targetDir, filename), content, 'utf-8');
+        }
+        
+        writeStatus = `\n\n📁 Files written to: ${targetDir}/`;
+      } catch (writeError) {
+        writeStatus = `\n\n⚠️ Could not write files: ${writeError instanceof Error ? writeError.message : String(writeError)}`;
+      }
+    }
+
     // Build file list for response
     const fileList = Object.keys(files)
       .map(f => `  - ${f}`)
       .join('\n');
 
+    const nextSteps = outputDir 
+      ? `Next steps:\n1. cd ${join(outputDir, spell.name)}\n2. Run: docker build -t ${spell.name} .\n3. Add to .kiro/settings/mcp.json`
+      : `Next steps:\n1. Save the generated files to a directory\n2. Run: docker build -t ${spell.name} .\n3. Add to .kiro/settings/mcp.json`;
+
     return {
       content: [
         {
           type: 'text',
-          text: `✨ Spell "${spell.name}" created successfully!\n\nGenerated files:\n${fileList}\n\nPersisted to: .kiro/data/spells.json\n\nNext steps:\n1. Save the generated files to a directory\n2. Run: docker build -t ${spell.name} .\n3. Add to .kiro/settings/mcp.json:\n   {\n     "mcpServers": {\n       "${spell.name}": {\n         "command": "docker",\n         "args": ["run", "--rm", "-i", "${spell.name}"]\n       }\n     }\n   }`
+          text: `✨ Spell "${spell.name}" created successfully!\n\nGenerated files:\n${fileList}${writeStatus}\n\nPersisted to: .kiro/data/spells.json\n\n${nextSteps}:\n   {\n     "mcpServers": {\n       "${spell.name}": {\n         "command": "docker",\n         "args": ["run", "--rm", "-i", "${spell.name}"]\n       }\n     }\n   }`
         },
         {
           type: 'text',
