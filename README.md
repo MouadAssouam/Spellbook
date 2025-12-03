@@ -428,6 +428,24 @@ See [.kiro/KIRO-USAGE.md](.kiro/KIRO-USAGE.md) for detailed documentation on how
 
 ---
 
+## 🚀 Roadmap
+
+Features planned for future updates:
+
+| Feature | Description |
+|---------|-------------|
+| **Auto-register to mcp.json** | Automatically add generated tools to your MCP config |
+| **npm install automation** | Run npm install after generating files |
+| **Edit existing spells** | Modify spells from the Grimoire sidebar |
+| **Multi-tool servers** | Generate servers with multiple tools |
+| **Authentication templates** | Built-in OAuth, API key, and Bearer token support |
+| **Import from OpenAPI** | Generate spells from OpenAPI/Swagger specs |
+| **Spell sharing** | Export/import spell definitions |
+
+Have a feature request? [Open an issue](https://github.com/MouadAssouam/Spellbook/issues)!
+
+---
+
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
