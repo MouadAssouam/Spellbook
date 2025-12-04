@@ -399,7 +399,7 @@ spellbook/
 
 ## 🏆 Kiroween Hackathon
 
-Built for the [Kiroween Hackathon](https://kiro.devpost.com) in the **Frankenstein** category.
+Built for the [Kiroween Hackathon](https://kiroween.devpost.com) in the **Frankenstein** category.
 
 ### 🧟 Why Frankenstein?
 
