@@ -468,6 +468,8 @@ Features planned for future updates:
 | **Import from OpenAPI** | Generate spells from OpenAPI/Swagger specs |
 | **Spell sharing** | Export/import spell definitions |
 
+> **Note:** These features will only be introduced once the Kiroween winners have been finalized, to maintain complete honesty, avoid any unfair advantage, and keep the competition fully transparent.
+
 Have a feature request? [Open an issue](https://github.com/MouadAssouam/Spellbook/issues)!
 
 ---
