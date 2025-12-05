@@ -151,6 +151,8 @@ npm install spellbook-mcp
 
 ### MCP Tool (Conversational)
 
+**Option A: Via npx (Recommended)**
+
 Add to your `.kiro/settings/mcp.json`:
 
 ```json
@@ -163,6 +165,30 @@ Add to your `.kiro/settings/mcp.json`:
   }
 }
 ```
+
+**Option B: From Source (For Development)**
+
+Clone the repo and build:
+```bash
+git clone https://github.com/MouadAssouam/Spellbook.git
+cd Spellbook
+npm install
+npm run build
+```
+
+Add to your `.kiro/settings/mcp.json`:
+```json
+{
+  "mcpServers": {
+    "spellbook": {
+      "command": "node",
+      "args": ["./packages/core/dist/spellbook-mcp.js"]
+    }
+  }
+}
+```
+
+> **Note:** Running from source requires the `packages/` folder and `tsconfig.json` to be present.
 
 Then ask Kiro: *"Create a spell that fetches GitHub issues"*
 
