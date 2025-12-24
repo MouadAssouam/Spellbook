@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "spellbook": {
-      "command": "node",
-      "args": ["./packages/core/dist/spellbook-mcp.js"],
+      "command": "npx",
+      "args": ["spellbook-mcp"],
       "disabled": false,
       "autoApprove": []
     }

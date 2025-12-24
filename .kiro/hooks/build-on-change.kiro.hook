@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "Build on Change",
+  "description": "Automatically runs npm run build when any .ts file in packages/core/src/ or extensions/vscode/src/ is saved, keeping the compiled dist/ folder in sync with source code.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "packages/core/src/**/*.ts",
+      "extensions/vscode/src/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npm run build"
+  }
+}

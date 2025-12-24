@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Lint Spell Names",
+  "description": "When you save a JSON file in examples/, it asks the agent to check if the spell name follows kebab-case (3-50 chars, letters/numbers/hyphens only)",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "examples/*.json"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check the spell name in this JSON file. Verify it follows kebab-case naming convention: must be 3-50 characters long, containing only lowercase letters, numbers, and hyphens. The name should match the regex pattern /^[a-z0-9-]+$/. If the name is invalid, explain what's wrong and suggest a corrected name. If valid, confirm it passes validation."
+  }
+}

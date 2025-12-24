@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Test on Save",
+  "description": "Automatically runs npm test when any .ts file in packages/core/src/ is saved, catching regressions immediately.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "packages/core/src/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npm test --workspace=packages/core"
+  }
+}
