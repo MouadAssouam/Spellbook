@@ -1,12 +1,13 @@
 {
-  "name": "spellbook-mcp",
-  "version": "0.1.9",
+  "name": "@spellbook/core",
+  "version": "1.0.0",
   "description": "Core types, templates, and generator for Spellbook MCP tool builder",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "spellbook-mcp": "./dist/spellbook-mcp.js"
+    "spellbook-mcp": "./dist/spellbook-mcp.js",
+    "spellbook": "./dist/cli.js"
   },
   "exports": {
     ".": {

@@ -36,11 +36,11 @@ const httpConfigArb: fc.Arbitrary<HTTPConfig> = fc.record({
 
 const scriptConfigArb: fc.Arbitrary<ScriptConfig> = fc.record({
   runtime: fc.constant('node' as const),
-  code: fc.string({ minLength: 1 })
+  code: fc.string({ minLength: 1 }),
+  execution: fc.constant('isolated' as const)
 });
 
-const spellArb: fc.Arbitrary<Spell> = fc.record({
-  id: fc.uuid(),
+const toolArb = fc.record({
   name: spellNameArb,
   description: descriptionArb,
   inputSchema: jsonSchemaArb,
@@ -49,6 +49,14 @@ const spellArb: fc.Arbitrary<Spell> = fc.record({
     fc.record({ type: fc.constant('http' as const), config: httpConfigArb }),
     fc.record({ type: fc.constant('script' as const), config: scriptConfigArb })
   )
+});
+
+const spellArb: fc.Arbitrary<Spell> = fc.record({
+  id: fc.uuid(),
+  name: spellNameArb,
+  description: descriptionArb,
+  transport: fc.constant('stdio' as const),
+  tools: fc.array(toolArb, { minLength: 1 })
 });
 
 // ============================================================================
@@ -60,11 +68,11 @@ describe('Generator - Complete file generation', () => {
     fc.assert(
       fc.property(spellArb, (spell) => {
         const files = generateMCPServer(spell);
-        
+
         // Must have exactly 4 files
         const fileNames = Object.keys(files);
         expect(fileNames).toHaveLength(4);
-        
+
         // Must have specific filenames
         expect(fileNames).toContain('Dockerfile');
         expect(fileNames).toContain('package.json');
@@ -74,12 +82,12 @@ describe('Generator - Complete file generation', () => {
       { numRuns: 100 }
     );
   });
-  
+
   it('Property 1: All files have non-empty content', () => {
     fc.assert(
       fc.property(spellArb, (spell) => {
         const files = generateMCPServer(spell);
-        
+
         // All files must have content
         for (const [filename, content] of Object.entries(files)) {
           expect(content).toBeTruthy();
@@ -102,38 +110,44 @@ describe('Generator - Validation enforcement', () => {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'ab',
       description: 'a'.repeat(100),
-      inputSchema: { type: 'object', properties: {} },
-      outputSchema: { type: 'object', properties: {} },
-      action: { type: 'http' as const, config: { url: 'http://test.com', method: 'GET' as const } }
+      tools: [{
+        name: 'valid-tool',
+        description: 'valid description',
+        inputSchema: {},
+        outputSchema: {},
+        action: { type: 'http', config: { url: 'http://test.com', method: 'GET' } }
+      }]
     };
-    
+
     expect(() => generateMCPServer(invalidSpell1 as any)).toThrow(z.ZodError);
-    
+
     // Invalid description (too short)
     const invalidSpell2 = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'valid-name',
       description: 'short',
-      inputSchema: { type: 'object', properties: {} },
-      outputSchema: { type: 'object', properties: {} },
-      action: { type: 'http' as const, config: { url: 'http://test.com', method: 'GET' as const } }
+      tools: [{
+        name: 'valid-tool',
+        description: 'valid description',
+        inputSchema: {},
+        outputSchema: {},
+        action: { type: 'http', config: { url: 'http://test.com', method: 'GET' } }
+      }]
     };
-    
+
     expect(() => generateMCPServer(invalidSpell2 as any)).toThrow(z.ZodError);
-    
-    // Invalid UUID
+
+    // Invalid tools (empty)
     const invalidSpell3 = {
-      id: 'not-a-uuid',
+      id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'valid-name',
       description: 'a'.repeat(100),
-      inputSchema: { type: 'object', properties: {} },
-      outputSchema: { type: 'object', properties: {} },
-      action: { type: 'http' as const, config: { url: 'http://test.com', method: 'GET' as const } }
+      tools: []
     };
-    
+
     expect(() => generateMCPServer(invalidSpell3 as any)).toThrow(z.ZodError);
   });
-  
+
   it('Property 2: Valid spells do not throw', () => {
     fc.assert(
       fc.property(spellArb, (spell) => {
@@ -155,10 +169,10 @@ describe('Generator - Determinism', () => {
       fc.property(spellArb, (spell) => {
         const files1 = generateMCPServer(spell);
         const files2 = generateMCPServer(spell);
-        
+
         // Same keys
         expect(Object.keys(files1).sort()).toEqual(Object.keys(files2).sort());
-        
+
         // Same content for each file
         for (const filename of Object.keys(files1)) {
           expect(files1[filename]).toBe(files2[filename]);
@@ -178,12 +192,12 @@ describe('Generator - File bundle structure', () => {
     fc.assert(
       fc.property(spellArb, (spell) => {
         const files = generateMCPServer(spell);
-        
+
         for (const filename of Object.keys(files)) {
           // Must be a non-empty string
           expect(typeof filename).toBe('string');
           expect(filename.length).toBeGreaterThan(0);
-          
+
           // Must not contain path separators
           expect(filename).not.toContain('/');
           expect(filename).not.toContain('\\');
@@ -192,12 +206,12 @@ describe('Generator - File bundle structure', () => {
       { numRuns: 100 }
     );
   });
-  
+
   it('Property 4: All values are non-empty strings', () => {
     fc.assert(
       fc.property(spellArb, (spell) => {
         const files = generateMCPServer(spell);
-        
+
         for (const content of Object.values(files)) {
           expect(typeof content).toBe('string');
           expect(content.length).toBeGreaterThan(0);
@@ -218,52 +232,62 @@ describe('Generator - Action type support', () => {
       id: fc.uuid(),
       name: spellNameArb,
       description: descriptionArb,
-      inputSchema: jsonSchemaArb,
-      outputSchema: jsonSchemaArb,
-      action: fc.record({ 
-        type: fc.constant('http' as const), 
-        config: httpConfigArb 
-      })
+      transport: fc.constant('stdio' as const),
+      tools: fc.array(fc.record({
+        name: spellNameArb,
+        description: descriptionArb,
+        inputSchema: jsonSchemaArb,
+        outputSchema: jsonSchemaArb,
+        action: fc.record({
+          type: fc.constant('http' as const),
+          config: httpConfigArb
+        })
+      }), { minLength: 1 })
     });
-    
+
     fc.assert(
       fc.property(httpSpellArb, (spell) => {
         // Should not throw
         const files = generateMCPServer(spell);
-        
+
         // Should generate all files
         expect(Object.keys(files)).toHaveLength(4);
-        
+
         // Server code should contain fetch
         expect(files['index.js']).toContain('fetch');
       }),
       { numRuns: 100 }
     );
   });
-  
+
   it('Property 5: Script actions generate successfully', () => {
     const scriptSpellArb = fc.record({
       id: fc.uuid(),
       name: spellNameArb,
       description: descriptionArb,
-      inputSchema: jsonSchemaArb,
-      outputSchema: jsonSchemaArb,
-      action: fc.record({ 
-        type: fc.constant('script' as const), 
-        config: scriptConfigArb 
-      })
+      transport: fc.constant('stdio' as const),
+      tools: fc.array(fc.record({
+        name: spellNameArb,
+        description: descriptionArb,
+        inputSchema: jsonSchemaArb,
+        outputSchema: jsonSchemaArb,
+        action: fc.record({
+          type: fc.constant('script' as const),
+          config: scriptConfigArb
+        })
+      }), { minLength: 1 })
     });
-    
+
     fc.assert(
       fc.property(scriptSpellArb, (spell) => {
         // Should not throw
         const files = generateMCPServer(spell);
-        
+
         // Should generate all files
         expect(Object.keys(files)).toHaveLength(4);
-        
-        // Server code should contain Function
-        expect(files['index.js']).toContain('Function');
+
+        // Server code should contain secure execution logic (default is isolated)
+        expect(files['index.js']).toContain('isolate.compileScriptSync');
       }),
       { numRuns: 100 }
     );

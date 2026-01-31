@@ -14,6 +14,10 @@ import type { Spell, HTTPConfig, ScriptConfig } from './types.js';
 // Arbitraries (Generators for property-based testing)
 // ============================================================================
 
+// ============================================================================
+// Arbitraries (Generators for property-based testing)
+// ============================================================================
+
 /**
  * Generates valid spell names (kebab-case, 3-50 chars)
  */
@@ -52,14 +56,11 @@ const httpConfigArb: fc.Arbitrary<HTTPConfig> = fc.record({
  */
 const scriptConfigArb: fc.Arbitrary<ScriptConfig> = fc.record({
   runtime: fc.constant('node' as const),
+  execution: fc.constantFrom('unsafe' as const, 'isolated' as const),
   code: fc.string({ minLength: 1 })
 });
 
-/**
- * Generates complete spell definitions
- */
-const spellArb: fc.Arbitrary<Spell> = fc.record({
-  id: fc.uuid(),
+const toolArb = fc.record({
   name: spellNameArb,
   description: descriptionArb,
   inputSchema: jsonSchemaArb,
@@ -70,23 +71,35 @@ const spellArb: fc.Arbitrary<Spell> = fc.record({
   )
 });
 
-// ============================================================================
-// Property 2: Valid Dockerfile syntax
-// ============================================================================
+/**
+ * Generates complete spell definitions
+ */
+const spellArb: fc.Arbitrary<Spell> = fc.record({
+  id: fc.uuid(),
+  name: spellNameArb,
+  description: descriptionArb,
+  tools: fc.array(toolArb, { minLength: 1 }),
+  transport: fc.constantFrom('stdio' as const, 'sse' as const)
+});
 
 describe('Dockerfile template', () => {
   it('Property 2: Valid Dockerfile syntax - contains required directives', () => {
     fc.assert(
       fc.property(spellArb, (spell) => {
         const dockerfile = templates.dockerfile(spell);
-        
-        // Must contain required directives
+
+        // Must contain required directives for production Dockerfile
         expect(dockerfile).toContain('FROM node:20-alpine');
         expect(dockerfile).toContain('WORKDIR /app');
-        expect(dockerfile).toContain('COPY package.json ./');
-        expect(dockerfile).toContain('RUN npm install --omit=dev');
-        expect(dockerfile).toContain('COPY . .');
+        expect(dockerfile).toContain('COPY package');
+        expect(dockerfile).toContain('npm ci --omit=dev'); // Production uses npm ci
         expect(dockerfile).toContain('CMD ["node", "index.js"]');
+        expect(dockerfile).toContain('USER nodejs'); // Security: non-root
+        if (spell.transport === 'sse') {
+          expect(dockerfile).toContain('HEALTHCHECK'); // K8s/orchestrator support
+        } else {
+          expect(dockerfile).not.toContain('HEALTHCHECK');
+        }
       }),
       { numRuns: 100 }
     );
@@ -102,16 +115,16 @@ describe('package.json template', () => {
     fc.assert(
       fc.property(spellArb, (spell) => {
         const pkgJson = templates.packageJson(spell);
-        
+
         // Must be valid JSON
         const pkg = JSON.parse(pkgJson);
-        
+
         // Must have required fields
         expect(pkg.name).toBe(`spell-${spell.name}`);
         expect(pkg.version).toBe('1.0.0');
         expect(pkg.type).toBe('module');
         expect(pkg.main).toBe('index.js');
-        
+
         // Must have required dependencies
         expect(pkg.dependencies).toHaveProperty('@modelcontextprotocol/sdk');
         expect(pkg.dependencies).toHaveProperty('ajv');
@@ -130,24 +143,29 @@ describe('Server code template', () => {
     fc.assert(
       fc.property(spellArb, (spell) => {
         const code = templates.serverCode(spell);
-        
+
         // Must contain MCP SDK imports
         expect(code).toContain("import { Server } from '@modelcontextprotocol/sdk/server/index.js'");
         expect(code).toContain("import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'");
         expect(code).toContain('CallToolRequestSchema');
         expect(code).toContain('ListToolsRequestSchema');
-        
+
         // Must contain server initialization
         expect(code).toContain('const server = new Server');
-        
+
         // Must contain request handlers
         expect(code).toContain('server.setRequestHandler(ListToolsRequestSchema');
         expect(code).toContain('server.setRequestHandler(CallToolRequestSchema');
-        
+
         // Must contain transport setup
-        expect(code).toContain('const transport = new StdioServerTransport()');
-        expect(code).toContain('await server.connect(transport)');
-        
+        if (spell.transport === 'stdio') {
+          expect(code).toContain('const transport = new StdioServerTransport()');
+          expect(code).toContain('await server.connect(transport)');
+        } else {
+          expect(code).toContain('SSEServerTransport');
+          expect(code).toContain("app.get('/sse'");
+        }
+
         // Must contain spell name (description may be escaped, so we don't check it directly)
         expect(code).toContain(spell.name);
       }),
@@ -166,45 +184,63 @@ describe('Action type handling', () => {
       id: fc.uuid(),
       name: spellNameArb,
       description: descriptionArb,
-      inputSchema: jsonSchemaArb,
-      outputSchema: jsonSchemaArb,
-      action: fc.record({ 
-        type: fc.constant('http' as const), 
-        config: httpConfigArb 
-      })
+      tools: fc.array(fc.record({
+        name: spellNameArb,
+        description: descriptionArb,
+        inputSchema: jsonSchemaArb,
+        outputSchema: jsonSchemaArb,
+        action: fc.record({
+          type: fc.constant('http' as const),
+          config: httpConfigArb
+        })
+      }), { minLength: 1 }),
+      transport: fc.constant('stdio' as const)
     });
-    
+
     fc.assert(
       fc.property(httpSpellArb, (spell) => {
         const code = templates.serverCode(spell);
-        
+
         // HTTP actions must generate fetch code
         expect(code).toContain('await fetch(');
-        expect(code).toContain(`method: '${spell.action.config.method}'`);
+        expect(code).toContain(`method: '${spell.tools[0].action.config.method}'`);
       }),
       { numRuns: 100 }
     );
   });
-  
+
   it('Property 5: Script actions generate execution code', () => {
     const scriptSpellArb = fc.record({
       id: fc.uuid(),
       name: spellNameArb,
       description: descriptionArb,
-      inputSchema: jsonSchemaArb,
-      outputSchema: jsonSchemaArb,
-      action: fc.record({ 
-        type: fc.constant('script' as const), 
-        config: scriptConfigArb 
-      })
+      tools: fc.array(fc.record({
+        name: spellNameArb,
+        description: descriptionArb,
+        inputSchema: jsonSchemaArb,
+        outputSchema: jsonSchemaArb,
+        action: fc.record({
+          type: fc.constant('script' as const),
+          config: scriptConfigArb
+        })
+      }), { minLength: 1 }),
+      transport: fc.constant('stdio' as const)
     });
-    
+
     fc.assert(
       fc.property(scriptSpellArb, (spell) => {
         const code = templates.serverCode(spell);
-        
-        // Script actions must generate Function execution code
-        expect(code).toContain('new Function');
+
+        const executions = spell.tools.map(t => t.action.config.execution);
+        const hasUnsafe = executions.includes('unsafe');
+        const hasIsolated = executions.includes('isolated');
+
+        if (hasUnsafe) {
+          expect(code).toContain('new Function');
+        }
+        if (hasIsolated) {
+          expect(code).toContain('isolated-vm');
+        }
       }),
       { numRuns: 100 }
     );
@@ -221,52 +257,62 @@ describe('HTTP configuration completeness', () => {
       id: fc.uuid(),
       name: spellNameArb,
       description: descriptionArb,
-      inputSchema: jsonSchemaArb,
-      outputSchema: jsonSchemaArb,
-      action: fc.record({ 
-        type: fc.constant('http' as const), 
-        config: fc.record({
-          url: fc.webUrl(),
-          method: fc.constantFrom('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
-          headers: fc.dictionary(fc.string(), fc.string(), { minKeys: 1 }),
-          body: fc.option(fc.string(), { nil: undefined })
+      tools: fc.array(fc.record({
+        name: spellNameArb,
+        description: descriptionArb,
+        inputSchema: jsonSchemaArb,
+        outputSchema: jsonSchemaArb,
+        action: fc.record({
+          type: fc.constant('http' as const),
+          config: fc.record({
+            url: fc.webUrl(),
+            method: fc.constantFrom('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
+            headers: fc.dictionary(fc.string(), fc.string(), { minKeys: 1 }),
+            body: fc.option(fc.string(), { nil: undefined })
+          })
         })
-      })
+      }), { minLength: 1 }),
+      transport: fc.constant('stdio' as const)
     });
-    
+
     fc.assert(
       fc.property(httpWithHeadersArb, (spell) => {
         const code = templates.serverCode(spell);
-        
+
         // Must include headers in fetch call
         expect(code).toContain('headers:');
       }),
       { numRuns: 100 }
     );
   });
-  
+
   it('Property 6: Body included when present', () => {
     const httpWithBodyArb = fc.record({
       id: fc.uuid(),
       name: spellNameArb,
       description: descriptionArb,
-      inputSchema: jsonSchemaArb,
-      outputSchema: jsonSchemaArb,
-      action: fc.record({ 
-        type: fc.constant('http' as const), 
-        config: fc.record({
-          url: fc.webUrl(),
-          method: fc.constantFrom('POST', 'PUT', 'PATCH'),
-          headers: fc.option(fc.dictionary(fc.string(), fc.string()), { nil: undefined }),
-          body: fc.string({ minLength: 1 })
+      tools: fc.array(fc.record({
+        name: spellNameArb,
+        description: descriptionArb,
+        inputSchema: jsonSchemaArb,
+        outputSchema: jsonSchemaArb,
+        action: fc.record({
+          type: fc.constant('http' as const),
+          config: fc.record({
+            url: fc.webUrl(),
+            method: fc.constantFrom('POST', 'PUT', 'PATCH'),
+            headers: fc.option(fc.dictionary(fc.string(), fc.string()), { nil: undefined }),
+            body: fc.string({ minLength: 1 })
+          })
         })
-      })
+      }), { minLength: 1 }),
+      transport: fc.constant('stdio' as const)
     });
-    
+
     fc.assert(
       fc.property(httpWithBodyArb, (spell) => {
         const code = templates.serverCode(spell);
-        
+
         // Must include body in fetch call
         expect(code).toContain('body:');
       }),
@@ -285,23 +331,28 @@ describe('Template interpolation support', () => {
       id: fc.uuid(),
       name: spellNameArb,
       description: descriptionArb,
-      inputSchema: jsonSchemaArb,
-      outputSchema: jsonSchemaArb,
-      action: fc.record({ 
-        type: fc.constant('http' as const), 
-        config: fc.record({
-          url: fc.constant('https://api.example.com/{{resource}}/{{id}}'),
-          method: fc.constantFrom('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
-          headers: fc.option(fc.dictionary(fc.string(), fc.string()), { nil: undefined }),
-          body: fc.option(fc.string(), { nil: undefined })
+      tools: fc.array(fc.record({
+        name: spellNameArb,
+        description: descriptionArb,
+        inputSchema: jsonSchemaArb,
+        outputSchema: jsonSchemaArb,
+        action: fc.record({
+          type: fc.constant('http' as const),
+          config: fc.record({
+            url: fc.constant('https://api.example.com/{{resource}}/{{id}}'),
+            method: fc.constantFrom('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
+            headers: fc.option(fc.dictionary(fc.string(), fc.string()), { nil: undefined }),
+            body: fc.option(fc.string(), { nil: undefined })
+          })
         })
-      })
+      }), { minLength: 1 }),
+      transport: fc.constant('stdio' as const)
     });
-    
+
     fc.assert(
       fc.property(httpWithInterpolationArb, (spell) => {
         const code = templates.serverCode(spell);
-        
+
         // Must include interpolate function
         expect(code).toContain('function interpolate');
         expect(code).toContain('interpolate(');
@@ -309,29 +360,34 @@ describe('Template interpolation support', () => {
       { numRuns: 100 }
     );
   });
-  
+
   it('Property 8: Interpolation function included when body has placeholders', () => {
     const httpWithBodyInterpolationArb = fc.record({
       id: fc.uuid(),
       name: spellNameArb,
       description: descriptionArb,
-      inputSchema: jsonSchemaArb,
-      outputSchema: jsonSchemaArb,
-      action: fc.record({ 
-        type: fc.constant('http' as const), 
-        config: fc.record({
-          url: fc.webUrl(),
-          method: fc.constantFrom('POST', 'PUT', 'PATCH'),
-          headers: fc.option(fc.dictionary(fc.string(), fc.string()), { nil: undefined }),
-          body: fc.constant('{"name": "{{name}}", "value": "{{value}}"}')
+      tools: fc.array(fc.record({
+        name: spellNameArb,
+        description: descriptionArb,
+        inputSchema: jsonSchemaArb,
+        outputSchema: jsonSchemaArb,
+        action: fc.record({
+          type: fc.constant('http' as const),
+          config: fc.record({
+            url: fc.webUrl(),
+            method: fc.constantFrom('POST', 'PUT', 'PATCH'),
+            headers: fc.option(fc.dictionary(fc.string(), fc.string()), { nil: undefined }),
+            body: fc.constant('{"name": "{{name}}", "value": "{{value}}"}')
+          })
         })
-      })
+      }), { minLength: 1 }),
+      transport: fc.constant('stdio' as const)
     });
-    
+
     fc.assert(
       fc.property(httpWithBodyInterpolationArb, (spell) => {
         const code = templates.serverCode(spell);
-        
+
         // Must include interpolate function
         expect(code).toContain('function interpolate');
         expect(code).toContain('interpolate(');
@@ -339,29 +395,34 @@ describe('Template interpolation support', () => {
       { numRuns: 100 }
     );
   });
-  
+
   it('Property 8: Interpolation function included when headers have placeholders', () => {
     const httpWithHeaderInterpolationArb = fc.record({
       id: fc.uuid(),
       name: spellNameArb,
       description: descriptionArb,
-      inputSchema: jsonSchemaArb,
-      outputSchema: jsonSchemaArb,
-      action: fc.record({ 
-        type: fc.constant('http' as const), 
-        config: fc.record({
-          url: fc.webUrl(),
-          method: fc.constantFrom('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
-          headers: fc.constant({ 'Authorization': 'Bearer {{token}}', 'Content-Type': 'application/json' }),
-          body: fc.option(fc.string(), { nil: undefined })
+      tools: fc.array(fc.record({
+        name: spellNameArb,
+        description: descriptionArb,
+        inputSchema: jsonSchemaArb,
+        outputSchema: jsonSchemaArb,
+        action: fc.record({
+          type: fc.constant('http' as const),
+          config: fc.record({
+            url: fc.webUrl(),
+            method: fc.constantFrom('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
+            headers: fc.constant({ 'Authorization': 'Bearer {{token}}', 'Content-Type': 'application/json' }),
+            body: fc.option(fc.string(), { nil: undefined })
+          })
         })
-      })
+      }), { minLength: 1 }),
+      transport: fc.constant('stdio' as const)
     });
-    
+
     fc.assert(
       fc.property(httpWithHeaderInterpolationArb, (spell) => {
         const code = templates.serverCode(spell);
-        
+
         // Must include interpolate function
         expect(code).toContain('function interpolate');
         // Must interpolate the header with placeholder
@@ -383,29 +444,29 @@ describe('README template', () => {
     fc.assert(
       fc.property(spellArb, (spell) => {
         const readme = templates.readme(spell);
-        
+
         // Must contain spell name as title
         expect(readme).toContain(`# ${spell.name}`);
-        
+
         // Must contain description
         expect(readme).toContain(spell.description);
-        
+
         // Must contain Docker build instructions
         expect(readme).toContain('docker build');
         expect(readme).toContain(`-t ${spell.name}`);
-        
+
         // Must contain mcp.json configuration example
         expect(readme).toContain('.kiro/settings/mcp.json');
         expect(readme).toContain('mcpServers');
         expect(readme).toContain(spell.name);
-        
+
         // Must contain input schema
         expect(readme).toContain('Input Schema');
-        expect(readme).toContain(JSON.stringify(spell.inputSchema, null, 2));
-        
+        expect(readme).toContain(JSON.stringify(spell.tools[0].inputSchema, null, 2));
+
         // Must contain output schema
         expect(readme).toContain('Output Schema');
-        expect(readme).toContain(JSON.stringify(spell.outputSchema, null, 2));
+        expect(readme).toContain(JSON.stringify(spell.tools[0].outputSchema, null, 2));
       }),
       { numRuns: 100 }
     );
@@ -424,15 +485,15 @@ describe('Template determinism', () => {
         const dockerfile1 = templates.dockerfile(spell);
         const dockerfile2 = templates.dockerfile(spell);
         expect(dockerfile1).toBe(dockerfile2);
-        
+
         const pkg1 = templates.packageJson(spell);
         const pkg2 = templates.packageJson(spell);
         expect(pkg1).toBe(pkg2);
-        
+
         const code1 = templates.serverCode(spell);
         const code2 = templates.serverCode(spell);
         expect(code1).toBe(code2);
-        
+
         const readme1 = templates.readme(spell);
         const readme2 = templates.readme(spell);
         expect(readme1).toBe(readme2);

@@ -3,7 +3,7 @@
  * Spellbook VS Code Extension
  * 
  * Provides commands for creating MCP servers directly from VS Code.
- * 🔮 A tool that builds tools - the meta moment!
+ *  A tool that builds tools - the meta moment!
  */
 
 import * as vscode from 'vscode';
@@ -20,11 +20,11 @@ export function activate(context: vscode.ExtensionContext) {
   // Initialize output channel for logging
   const outputChannel = initLogger();
   context.subscriptions.push(outputChannel);
-  
-  log('🔮 Spellbook extension activated');
+
+  log(' Spellbook extension activated');
 
   // Register sidebar webview provider
-  const sidebarProvider = new GrimoireSidebarProvider(context.extensionUri);
+  const sidebarProvider = new GrimoireSidebarProvider(context.extensionUri, context);
   const sidebarDisposable = vscode.window.registerWebviewViewProvider(
     GrimoireSidebarProvider.viewType,
     sidebarProvider
@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
   // Register open grimoire command (Webview Panel - fallback)
   const openGrimoireDisposable = vscode.commands.registerCommand(
     'spellbook.openGrimoire',
-    () => GrimoirePanel.createOrShow(context.extensionUri)
+    () => GrimoirePanel.createOrShow(context.extensionUri, sidebarProvider)
   );
 
   // Register refresh command
@@ -61,5 +61,5 @@ export function activate(context: vscode.ExtensionContext) {
  * Called when the extension is deactivated.
  */
 export function deactivate() {
-  log('📜 Spellbook extension deactivated');
+  log(' Spellbook extension deactivated');
 }

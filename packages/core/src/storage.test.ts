@@ -23,16 +23,21 @@ function createTestSpell(overrides: Partial<Spell> = {}): Spell {
   return {
     id: randomUUID(),
     name: 'test-spell',
+    transport: 'stdio',
     description: 'A test spell for unit testing purposes. This description needs to be at least 100 characters long to pass validation.',
-    action: {
-      type: 'http',
-      config: {
-        url: 'https://api.example.com/test',
-        method: 'GET'
-      }
-    },
-    inputSchema: { type: 'object' },
-    outputSchema: { type: 'object' },
+    tools: [{
+      name: 'test-tool',
+      description: 'A test tool description that is long enough to pass the validation requirements. It needs to be at least 100 characters long, so I am just typing words to fill the space.',
+      action: {
+        type: 'http',
+        config: {
+          url: 'https://api.example.com/test',
+          method: 'GET'
+        }
+      },
+      inputSchema: { type: 'object' },
+      outputSchema: { type: 'object' }
+    }],
     ...overrides
   };
 }
@@ -59,7 +64,7 @@ describe('Storage - Property Tests', () => {
     // Create multiple test spells
     const spells = new Map<string, Spell>();
     for (let i = 0; i < 5; i++) {
-      const spell = createTestSpell({ 
+      const spell = createTestSpell({
         id: randomUUID(),
         name: `test-spell-${i}`
       });
@@ -203,10 +208,10 @@ describe('MCP Tool - Property Tests', () => {
   it('Property 1: Valid spells generate complete file bundles', async () => {
     // Import generator
     const { generateMCPServer } = await import('./generator.js');
-    
+
     const spell = createTestSpell();
     const files = generateMCPServer(spell);
-    
+
     // Verify all 4 files generated
     expect(Object.keys(files)).toHaveLength(4);
     expect(files['Dockerfile']).toBeDefined();
@@ -225,15 +230,19 @@ describe('MCP Tool - Property Tests', () => {
       id: randomUUID(),
       name: 'ab', // Too short (min 3)
       description: 'A test spell for unit testing purposes. This description needs to be at least 100 characters long to pass validation.',
-      action: {
-        type: 'http' as const,
-        config: {
-          url: 'https://api.example.com/test',
-          method: 'GET' as const
-        }
-      },
-      inputSchema: { type: 'object' },
-      outputSchema: { type: 'object' }
+      tools: [{
+        name: 'test-tool',
+        description: 'Test description',
+        action: {
+          type: 'http' as const,
+          config: {
+            url: 'https://api.example.com/test',
+            method: 'GET' as const
+          }
+        },
+        inputSchema: { type: 'object' },
+        outputSchema: { type: 'object' }
+      }]
     };
 
     const result = SpellSchema.safeParse(invalidSpell);

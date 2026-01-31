@@ -48,7 +48,7 @@ describe('Example Spells - Property Tests', () => {
     for (const spell of exampleSpells) {
       const files = generateMCPServer(spell);
       const keys = Object.keys(files);
-      
+
       expect(keys).toHaveLength(4);
       expect(keys).toContain('Dockerfile');
       expect(keys).toContain('package.json');
@@ -65,10 +65,11 @@ describe('Example Spells - Property Tests', () => {
     for (const spell of exampleSpells) {
       const files = generateMCPServer(spell);
       const pkg = JSON.parse(files['package.json']);
-      
+
       expect(pkg.dependencies).toBeDefined();
       expect(pkg.dependencies['@modelcontextprotocol/sdk']).toBeDefined();
       expect(pkg.dependencies['ajv']).toBeDefined();
+      expect(pkg.dependencies['zod']).toBeDefined();
       expect(pkg.type).toBe('module');
     }
   });
@@ -81,11 +82,17 @@ describe('Example Spells - Property Tests', () => {
     for (const spell of exampleSpells) {
       const files = generateMCPServer(spell);
       const dockerfile = files['Dockerfile'];
-      
+
       expect(dockerfile).toContain('FROM node:20-alpine');
       expect(dockerfile).toContain('WORKDIR');
       expect(dockerfile).toContain('COPY package');
-      expect(dockerfile).toContain('npm install');
+      expect(dockerfile).toContain('npm ci'); // Production uses npm ci for reproducible builds
+      expect(dockerfile).toContain('USER nodejs'); // Non-root user
+      if (spell.transport === 'sse') {
+        expect(dockerfile).toContain('HEALTHCHECK'); // Health check for orchestrators
+      } else {
+        expect(dockerfile).not.toContain('HEALTHCHECK');
+      }
     }
   });
 
@@ -97,7 +104,7 @@ describe('Example Spells - Property Tests', () => {
     for (const spell of exampleSpells) {
       const files = generateMCPServer(spell);
       const serverCode = files['index.js'];
-      
+
       // Check for basic JS structure - imports, server setup, handlers
       expect(serverCode).toContain('import {');
       expect(serverCode).toContain('const server = new Server');
@@ -111,12 +118,12 @@ describe('Example Spells - Property Tests', () => {
    * **Validates: Requirements 4.2**
    */
   it('Property 5: HTTP action spells include fetch implementation', () => {
-    const httpSpells = exampleSpells.filter(s => s.action.type === 'http');
-    
+    const httpSpells = exampleSpells.filter(s => s.tools.some(t => t.action.type === 'http'));
+
     for (const spell of httpSpells) {
       const files = generateMCPServer(spell);
       const serverCode = files['index.js'];
-      
+
       expect(serverCode).toContain('fetch(');
       expect(serverCode).toContain('response.ok');
       expect(serverCode).toContain('JSON.parse(text)');
@@ -127,14 +134,23 @@ describe('Example Spells - Property Tests', () => {
    * **Feature: milestone-6-example, Property 6: Script action spells include Function constructor**
    * **Validates: Requirements 4.3**
    */
-  it('Property 6: Script action spells include Function constructor', () => {
-    const scriptSpells = exampleSpells.filter(s => s.action.type === 'script');
-    
+  it('Property 6: Script action spells include execution logic', () => {
+    const scriptSpells = exampleSpells.filter(s => s.tools.some(t => t.action.type === 'script'));
+
     for (const spell of scriptSpells) {
       const files = generateMCPServer(spell);
       const serverCode = files['index.js'];
-      
-      expect(serverCode).toContain('new Function');
+
+      // Scripts with explicit isolated mode use sandbox, others use Function
+      const hasIsolated = spell.tools.some(t =>
+        t.action.type === 'script' && t.action.config.execution === 'isolated'
+      );
+
+      if (hasIsolated) {
+        expect(serverCode).toContain('isolate.compileScriptSync');
+      } else {
+        expect(serverCode).toContain('new Function');
+      }
     }
   });
 
@@ -143,14 +159,14 @@ describe('Example Spells - Property Tests', () => {
    * **Validates: Requirements 4.4**
    */
   it('Property 7: URL interpolation is included when needed', () => {
-    const spellsWithInterpolation = exampleSpells.filter(s => 
-      s.action.type === 'http' && s.action.config.url.includes('{{')
+    const spellsWithInterpolation = exampleSpells.filter(s =>
+      s.tools.some(t => t.action.type === 'http' && t.action.config.url.includes('{{'))
     );
-    
+
     for (const spell of spellsWithInterpolation) {
       const files = generateMCPServer(spell);
       const serverCode = files['index.js'];
-      
+
       expect(serverCode).toContain('function interpolate');
       expect(serverCode).toContain('interpolate(');
     }
@@ -164,7 +180,7 @@ describe('Example Spells - Property Tests', () => {
     for (const spell of exampleSpells) {
       const files = generateMCPServer(spell);
       const readme = files['README.md'];
-      
+
       // Title with spell name
       expect(readme).toContain(`# ${spell.name}`);
       // Description
@@ -192,7 +208,7 @@ describe('Example Spells - Property Tests', () => {
       const parsed = JSON.parse(json);
       // Validate against schema
       const result = SpellSchema.safeParse(parsed);
-      
+
       expect(result.success).toBe(true);
     }
   });
@@ -205,33 +221,33 @@ describe('Example Spells - Property Tests', () => {
 
 describe('GitHub Fetcher Example', () => {
   const spell = loadExample('github-fetcher.json');
-  
+
   it('generates valid MCP server files', () => {
     const files = generateMCPServer(spell);
-    
+
     expect(Object.keys(files)).toHaveLength(4);
     expect(files['Dockerfile']).toBeDefined();
     expect(files['package.json']).toBeDefined();
     expect(files['index.js']).toBeDefined();
     expect(files['README.md']).toBeDefined();
   });
-  
+
   it('includes URL interpolation for owner and repo', () => {
     const files = generateMCPServer(spell);
     const serverCode = files['index.js'];
-    
+
     expect(serverCode).toContain('interpolate');
     expect(serverCode).toContain('api.github.com');
   });
-  
+
   it('has correct name and description in README', () => {
     const files = generateMCPServer(spell);
     const readme = files['README.md'];
-    
+
     expect(readme).toContain('# github-fetcher');
     expect(readme).toContain('GitHub issues');
   });
-  
+
   it('validates against SpellSchema', () => {
     const result = SpellSchema.safeParse(spell);
     expect(result.success).toBe(true);
@@ -240,33 +256,33 @@ describe('GitHub Fetcher Example', () => {
 
 describe('Weather API Example', () => {
   const spell = loadExample('weather-api.json');
-  
+
   it('generates valid MCP server files', () => {
     const files = generateMCPServer(spell);
-    
+
     expect(Object.keys(files)).toHaveLength(4);
     expect(files['Dockerfile']).toBeDefined();
     expect(files['package.json']).toBeDefined();
     expect(files['index.js']).toBeDefined();
     expect(files['README.md']).toBeDefined();
   });
-  
+
   it('includes URL interpolation for city and apiKey', () => {
     const files = generateMCPServer(spell);
     const serverCode = files['index.js'];
-    
+
     expect(serverCode).toContain('interpolate');
     expect(serverCode).toContain('openweathermap');
   });
-  
+
   it('has correct name and description in README', () => {
     const files = generateMCPServer(spell);
     const readme = files['README.md'];
-    
+
     expect(readme).toContain('# weather-api');
     expect(readme).toContain('weather data');
   });
-  
+
   it('validates against SpellSchema', () => {
     const result = SpellSchema.safeParse(spell);
     expect(result.success).toBe(true);
@@ -275,33 +291,33 @@ describe('Weather API Example', () => {
 
 describe('Calculator Example', () => {
   const spell = loadExample('calculator.json');
-  
+
   it('generates valid MCP server files', () => {
     const files = generateMCPServer(spell);
-    
+
     expect(Object.keys(files)).toHaveLength(4);
     expect(files['Dockerfile']).toBeDefined();
     expect(files['package.json']).toBeDefined();
     expect(files['index.js']).toBeDefined();
     expect(files['README.md']).toBeDefined();
   });
-  
-  it('includes Function constructor for script execution', () => {
+
+  it('includes secure sandbox for script execution', () => {
     const files = generateMCPServer(spell);
     const serverCode = files['index.js'];
-    
-    expect(serverCode).toContain('new Function');
+
+    expect(serverCode).toContain('isolate.compileScriptSync');
     expect(serverCode).not.toContain('fetch(');
   });
-  
+
   it('has correct name and description in README', () => {
     const files = generateMCPServer(spell);
     const readme = files['README.md'];
-    
+
     expect(readme).toContain('# calculator');
     expect(readme).toContain('arithmetic');
   });
-  
+
   it('validates against SpellSchema', () => {
     const result = SpellSchema.safeParse(spell);
     expect(result.success).toBe(true);

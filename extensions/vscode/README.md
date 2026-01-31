@@ -1,419 +1,218 @@
-# 🔮 Spellbook VS Code Extension
+# 🧙 Spellbook VS Code Extension
 
-**Build MCP tools in 30 seconds, not hours.**
+**MCP Tool Generator with Live API Verification**
 
-## What is this?
+> Test your API. See the real response. Generate code that works.
 
-Spellbook lets you create MCP (Model Context Protocol) tools visually. Instead of writing boilerplate code, you fill in a form and Spellbook generates everything you need.
+---
+
+## The Problem You've Had
+
+You use an AI to generate an MCP tool. It looks right. Docker builds.
+
+You deploy it.
+
+Then your agent starts failing silently because:
+- The schema was guessed from docs (docs lie)
+- Auth headers that worked locally fail in prod
+- The endpoint changed and nobody noticed
+
+**AI can't call your API. It can't test if the tool actually works.**
+
+---
+
+## What Spellbook Does
+
+1. **You enter the API URL**
+2. **Spellbook calls the API** (with real test values you provide)
+3. **You see the actual response**
+4. **Schema is inferred from real data**
+5. **Code is generated that matches reality**
+
+The tool you deploy already worked once.
+
+---
 
 ## Quick Start (2 minutes)
 
-### Step 1: Open the Sidebar
-Click the 🔮 Spellbook icon in the Activity Bar (left side of VS Code).
+### 1. Open Sidebar
+Click the 🧙 icon in the Activity Bar.
 
-### Step 2: Create Your First Spell
-1. Click the **"🕯️ Conjure"** tab
-2. Click an example button (try **🐙 GitHub**)
-3. Click **"🕯️ SUMMON FROM THE VOID 🕯️"**
+### 2. Test Your API First
+1. Add an HTTP tool with your URL
+2. Click **"🧪 Test API"**
+3. Enter real values when prompted (not `test_username`, but `octocat`)
+4. See the actual response
 
-### Step 3: Use Your Generated Tool
+### 3. Use the Schema
+Click **"✨ Use This Schema"** to auto-populate from the real response.
+
+### 4. Generate
+Click **"🪄 Summon"** to generate your MCP server.
+
+### 5. Run
 ```bash
-cd github-fetcher
-docker build -t github-fetcher .
+cd your-tool
+docker build -t your-tool .
 ```
 
-Add to `.kiro/settings/mcp.json`:
+Add to your MCP config:
 ```json
 {
   "mcpServers": {
-    "github-fetcher": {
+    "your-tool": {
       "command": "docker",
-      "args": ["run", "--rm", "-i", "github-fetcher"]
+      "args": ["run", "--rm", "-i", "your-tool"]
     }
   }
 }
 ```
 
-Done! Your MCP tool is ready to use.
+Done. Your tested, working MCP tool is ready.
+
+---
+
+## The Core Feature: Live Testing
+
+| What You Do | What Happens |
+|-------------|--------------|
+| Enter `https://api.github.com/repos/{{owner}}/{{repo}}/issues` | Spellbook detects `{{owner}}` and `{{repo}}` placeholders |
+| Click "🧪 Test API" | Modal asks for real values |
+| Enter `owner: microsoft, repo: vscode` | Spellbook calls the actual API |
+| See "✓ 200" + JSON response | You know it works |
+| Click "Use This Schema" | Schema inferred from real data, not guessed |
+
+**This is what AI cannot do.**
+
+---
+
+## Why Not Just Use AI?
+
+| Capability | AI Generator | Spellbook |
+|------------|--------------|-----------|
+| Generate MCP boilerplate | ✅ | ✅ |
+| Call the actual API | ❌ | ✅ |
+| Show real response | ❌ | ✅ |
+| Infer schema from live data | ❌ | ✅ |
+| Detect auth errors before deploy | ❌ | ✅ |
+| Watch for API changes | ❌ | ✅ (New!) |
+
+---
+
+## Watch Mode
+
+Enable watching on any spell:
+
+```
+Spellbook periodically calls your API
+    ↓
+If the response schema changes
+    ↓
+You get notified immediately
+    ↓
+One click to update the spell
+```
+
+AI generates once and forgets. Spellbook watches.
+
+---
+
+## OpenAPI Import
+
+Have a Swagger spec? Import all endpoints at once.
+
+1. Find the **"📜 Import from OpenAPI"** section
+2. Paste: `https://petstore.swagger.io/v2/swagger.json`
+3. Click **"⚡ Auto-Import"**
+4. All endpoints become tools
+
+Auth type is auto-detected (API Key, Bearer, OAuth2).
+
+---
+
+## Generated Output
+
+```
+your-tool/
+├── Dockerfile      # Node.js 20 Alpine
+├── package.json    # Dependencies
+├── index.js        # MCP server
+└── README.md       # Usage
+```
+
+Standard MCP server. Works with Claude, Cursor, Kiro, any MCP client.
+
+---
+
+## HTTP vs Script
+
+| Type | Use When |
+|------|----------|
+| **HTTP** | Calling APIs (GitHub, Slack, etc.) |
+| **Script** | Custom logic (calculations, transforms) |
+
+### HTTP Example
+```
+URL: https://api.github.com/users/{{username}}
+Method: GET
+```
+
+### Script Example
+```javascript
+const { a, b } = input;
+return { sum: a + b };
+```
+
+---
+
+## Authentication
+
+Set globally for all tools:
+
+| Type | Header |
+|------|--------|
+| API Key | `X-API-Key: <value>` |
+| Bearer | `Authorization: Bearer <value>` |
+| OAuth 2.1 | Full flow with token refresh |
+
+Auth is read from environment variables. Set the env var name in the UI.
 
 ---
 
 ## FAQ
 
-### What is an MCP tool?
+**Why test before generating?**
 
-MCP (Model Context Protocol) tools are plugins that AI assistants like Kiro can use. When you create a spell, you're creating a tool that Kiro can call during conversations.
+Because AI guesses schemas. You ship, it 500s, you debug, you fix, you redeploy. Spellbook frontloads that discovery.
 
-### What gets generated?
+**What if my API requires auth?**
 
-For each spell, Spellbook creates 4 files:
+Set your env var in the Auth section. Spellbook uses it during testing.
 
-| File | Purpose |
-|------|---------|
-| `Dockerfile` | Container config (Node.js 20 Alpine) |
-| `package.json` | Dependencies |
-| `index.js` | The actual MCP server code |
-| `README.md` | Usage instructions |
+**Can I edit the generated code?**
 
-### What's the difference between HTTP and Script?
-
-- **HTTP** - Makes API calls (GitHub, Weather, Slack, etc.)
-- **Script** - Runs JavaScript code (calculations, transforms, etc.)
-
-### What are template variables `{{var}}`?
-
-Placeholders that get replaced with user input at runtime:
-```
-https://api.github.com/repos/{{owner}}/{{repo}}/issues
-```
-When called with `owner=microsoft, repo=vscode`, becomes:
-```
-https://api.github.com/repos/microsoft/vscode/issues
-```
-
-### Why do I need Docker?
-
-Docker packages your tool so it runs the same everywhere. No "works on my machine" problems.
-
-If you don't have Docker, you can also run directly:
-```bash
-cd your-spell
-npm install
-node index.js
-```
-
-### What are the validation rules?
-
-| Field | Rule |
-|-------|------|
-| Name | 3-50 characters, kebab-case (letters, numbers, hyphens) |
-| Description | 100-500 characters |
-| URL | Must be valid URL format |
-| Code | Cannot be empty (for script actions) |
-
-### Can I edit the generated code?
-
-Yes! The generated files are yours. Edit `index.js` to customize behavior, add error handling, or extend functionality.
-
----
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `Spellbook: Create MCP Tool` | Open the QuickPick wizard |
-| `Spellbook: Open Grimoire` | Open the full panel view |
-| `Refresh Spells` | Reload the spells list |
+Yes. It's standard Node.js. Add what you need.
 
 ---
 
 ## Troubleshooting
 
-### "Spell already exists"
-A folder with that name already exists in your workspace. Choose a different name or delete the existing folder.
+**"Test API" shows error**
+- Check the URL is correct
+- Verify auth is configured
+- Make sure the API is publicly accessible
 
-### "Description must be at least 100 characters"
-Add more detail about what your tool does. Explain the use case, inputs, and outputs.
-
-### Generated tool doesn't work
-1. Check the `index.js` for syntax errors
-2. Verify your URL is correct (test in browser first)
-3. Make sure Docker is running
-4. Check the MCP config path is correct
-
-### Sidebar not showing
-1. Click the 🔮 icon in the Activity Bar
-2. If missing, reload VS Code (`Ctrl+Shift+P` → "Reload Window")
+**"Spell already exists"**
+- A folder with that name exists
+- Choose a different name or delete the folder
 
 ---
 
-## Examples
+## Links
 
-### GitHub Issues Fetcher
-Fetches issues from any GitHub repository.
-- **Type**: HTTP GET
-- **URL**: `https://api.github.com/repos/{{owner}}/{{repo}}/issues`
-- **Inputs**: owner, repo
-
-### Weather API
-Gets current weather for a city.
-- **Type**: HTTP GET  
-- **URL**: `https://api.openweathermap.org/data/2.5/weather?q={{city}}&appid={{apiKey}}`
-- **Inputs**: city, apiKey
-
-### Calculator
-Performs arithmetic operations.
-- **Type**: Script
-- **Code**: `const { a, b, op } = input; return { result: op === 'add' ? a + b : a - b };`
-- **Inputs**: a, b, operation
+- [GitHub Repository](https://github.com/MouadAssouam/Spellbook)
+- [npm Package](https://www.npmjs.com/package/spellbook-mcp)
 
 ---
 
-## Glossary
-
-| Term | Meaning |
-|------|---------|
-| **Spell** | A tool definition (name, description, action, inputs) |
-| **Grimoire** | The spell library / UI |
-| **Summon** | Generate the MCP server files |
-| **Conjure** | Create a new spell |
-| **Ingredients** | Input parameters for your spell |
-
----
-
----
-
-## Deep Dive: How Spellbook Works
-
-### The Flow
-
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  You fill   │ ──▶ │  Spellbook  │ ──▶ │  Generator  │ ──▶ │  4 files    │
-│  the form   │     │  validates  │     │  creates    │     │  ready!     │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-```
-
-### Step-by-Step: What Happens When You Click "Summon"
-
-**1. Form Data Collection**
-```javascript
-{
-  name: "github-fetcher",
-  description: "Fetches GitHub issues...",
-  actionType: "http",
-  url: "https://api.github.com/repos/{{owner}}/{{repo}}/issues",
-  method: "GET",
-  parameters: [
-    { name: "owner", type: "string", required: true },
-    { name: "repo", type: "string", required: true }
-  ]
-}
-```
-
-**2. Validation (Zod Schema)**
-- Name: 3-50 chars, kebab-case only
-- Description: 100-500 chars
-- URL: Valid format (allows `{{var}}` placeholders)
-- Parameters: Valid identifiers
-
-If validation fails → Error shown, no files created.
-
-**3. Template Generation**
-
-Spellbook generates 4 files using pure template functions:
-
-**Dockerfile:**
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package.json ./
-RUN npm install --omit=dev
-COPY . .
-CMD ["node", "index.js"]
-```
-
-**package.json:**
-```json
-{
-  "name": "spell-github-fetcher",
-  "version": "1.0.0",
-  "type": "module",
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "ajv": "^8.12.0"
-  }
-}
-```
-
-**index.js** (simplified):
-```javascript
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import Ajv from 'ajv';
-
-// Validate inputs with Ajv
-const ajv = new Ajv({ allErrors: true });
-const validateInput = ajv.compile(inputSchema);
-
-// Register the tool
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [{
-    name: 'github-fetcher',
-    description: 'Fetches GitHub issues...',
-    inputSchema: { /* your parameters */ }
-  }]
-}));
-
-// Handle tool calls
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const input = request.params.arguments;
-  
-  // Validate input
-  if (!validateInput(input)) {
-    throw new Error('Invalid input');
-  }
-  
-  // Make the HTTP request (with {{var}} replaced)
-  const url = `https://api.github.com/repos/${input.owner}/${input.repo}/issues`;
-  const response = await fetch(url);
-  return { content: [{ type: 'json', json: await response.json() }] };
-});
-
-// Connect via stdio
-const transport = new StdioServerTransport();
-await server.connect(transport);
-```
-
-**README.md:**
-- Installation instructions
-- mcp.json configuration
-- Input/output schemas
-
-**4. File Writing**
-Files are written to `your-workspace/spell-name/`.
-
----
-
-### How the Generated MCP Server Works
-
-When Kiro (or any MCP client) calls your tool:
-
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Kiro      │ ──▶ │  Your MCP   │ ──▶ │  External   │
-│   calls     │     │  Server     │     │  API        │
-│   tool      │     │  (index.js) │     │             │
-└─────────────┘     └─────────────┘     └─────────────┘
-      │                   │                   │
-      │  stdin/stdout     │   HTTP request    │
-      │  (JSON-RPC)       │                   │
-      ▼                   ▼                   ▼
-   Request:            Validates          Returns:
-   {                   input with         { issues: [...] }
-     owner: "ms",      Ajv, then
-     repo: "vscode"    fetches data
-   }
-```
-
-**Communication Protocol:**
-- MCP uses **stdio** (stdin/stdout) for communication
-- Messages are **JSON-RPC** format
-- That's why `console.log()` breaks things - it corrupts the protocol!
-
----
-
-### HTTP Action Deep Dive
-
-For HTTP spells, the generated code:
-
-1. **Interpolates variables** - Replaces `{{owner}}` with actual value
-2. **Sets timeout** - 15 seconds max
-3. **Validates host** - Can restrict to specific domains
-4. **Limits response size** - 10MB max
-5. **Parses JSON** - Returns structured data
-
-```javascript
-// Template variable interpolation
-function interpolate(template, vars) {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
-    return vars[key] !== undefined ? String(vars[key]) : '';
-  });
-}
-
-// URL becomes: https://api.github.com/repos/microsoft/vscode/issues
-const url = interpolate('https://api.github.com/repos/{{owner}}/{{repo}}/issues', input);
-```
-
----
-
-### Script Action Deep Dive
-
-For script spells, the generated code:
-
-1. **Creates a Function** - From your code string
-2. **Sets timeout** - 5 seconds max
-3. **Passes input** - Your parameters as `input` object
-4. **Returns result** - Must be JSON-serializable
-
-```javascript
-// Your code runs in a Function constructor
-const fn = new Function('input', 'const { a, b, op } = input; return { result: a + b };');
-
-// Called with input object
-const result = fn({ a: 5, b: 3, op: 'add' });
-// Returns: { result: 8 }
-```
-
-⚠️ **Security Note:** Script actions run with full Node.js privileges. Only use trusted code.
-
----
-
-### Validation Deep Dive
-
-**Two layers of validation:**
-
-| Layer | When | Tool | Purpose |
-|-------|------|------|---------|
-| Build-time | When you click Summon | Zod | Validates spell definition |
-| Runtime | When tool is called | Ajv | Validates user inputs |
-
-**Build-time (Zod):**
-```typescript
-const SpellSchema = z.object({
-  name: z.string().min(3).max(50).regex(/^[a-zA-Z0-9-]+$/),
-  description: z.string().min(100).max(500),
-  // ...
-});
-```
-
-**Runtime (Ajv in generated server):**
-```javascript
-const inputSchema = {
-  type: 'object',
-  properties: {
-    owner: { type: 'string' },
-    repo: { type: 'string' }
-  },
-  required: ['owner', 'repo']
-};
-
-const validateInput = ajv.compile(inputSchema);
-if (!validateInput(input)) {
-  throw new Error('Invalid input: owner must be string');
-}
-```
-
----
-
-### The Architecture (It's a Compiler!)
-
-Spellbook is actually a **domain-specific compiler**:
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  SCHEMA LAYER   │ ──▶ │ TEMPLATE ENGINE │ ──▶ │   GENERATOR     │
-│  (Zod)          │     │ (Pure functions)│     │ (File emission) │
-├─────────────────┤     ├─────────────────┤     ├─────────────────┤
-│ • Parse input   │     │ • dockerfile()  │     │ • Validate      │
-│ • Type check    │     │ • packageJson() │     │ • Transform     │
-│ • Validate      │     │ • serverCode()  │     │ • Write files   │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-```
-
-**Source language:** Spell JSON definition
-**Target language:** MCP server files (JS, Docker, etc.)
-
-Same input always produces identical output (deterministic).
-
----
-
-## Need Help?
-
-- Check the [main README](https://github.com/MouadAssouam/Spellbook#readme) for project overview
-- See [examples/](https://github.com/MouadAssouam/Spellbook/tree/main/examples) for more spell definitions
-- See [KIRO-USAGE.md](https://github.com/MouadAssouam/Spellbook/blob/main/.kiro/KIRO-USAGE.md) for how this was built
-
----
-
-**Happy spell casting! 🔮✨**
+**Test first. Ship working code. 🧙**

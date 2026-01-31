@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <!-- CSP_META -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spellbook Grimoire</title>
+    <style>
+        :root {
+            --container-padding: 20px;
+            --input-padding-vertical: 6px;
+            --input-padding-horizontal: 8px;
+            --input-margin-vertical: 4px;
+            --input-margin-horizontal: 0;
+            --success: var(--vscode-testing-iconPassed, #4ec9b0);
+            --error: var(--vscode-testing-iconFailed, #f14c4c);
+            --warning: var(--vscode-editorWarning-foreground, #cca700);
+            --secondary: var(--vscode-descriptionForeground);
+            --border: var(--vscode-input-border);
+            --text-muted: var(--vscode-descriptionForeground);
+        }
+
+        body {
+            background-color: var(--vscode-sideBar-background);
+            color: var(--vscode-foreground);
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+            padding: 0;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Typography */
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .section-header {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--vscode-descriptionForeground);
+            margin-bottom: 8px;
+            margin-top: 24px;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-header::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--vscode-panel-border);
+            opacity: 0.5;
+        }
+
+        .section-header:first-of-type {
+            margin-top: 0;
+        }
+
+        .step-badge {
+            background: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            margin-right: 4px;
+        }
+
+        /* Layout */
+        .container {
+            padding: var(--container-padding);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Cards / Sections */
+        .card {
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-widget-border);
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .description-text {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        /* Inputs */
+        input,
+        select,
+        textarea {
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 2px;
+            padding: var(--input-padding-vertical) var(--input-padding-horizontal);
+            width: 100%;
+            font-family: inherit;
+            font-size: inherit;
+            box-sizing: border-box;
+            outline: none;
+            margin-bottom: 8px;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--vscode-focusBorder);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--vscode-input-placeholderForeground);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--vscode-input-foreground);
+        }
+
+        .field-error {
+            border-color: var(--error) !important;
+        }
+
+        .error-text {
+            color: var(--error);
+            font-size: 11px;
+            margin: -4px 0 6px;
+        }
+
+        .validation-summary {
+            display: none;
+            border: 1px solid var(--error);
+            color: var(--error);
+            background: rgba(241, 76, 76, 0.1);
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+
+        .validation-summary.visible {
+            display: block;
+        }
+
+        .edit-banner {
+            display: none;
+            border: 1px solid var(--vscode-panel-border);
+            background: var(--vscode-editor-background);
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+
+        .edit-banner.visible {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: space-between;
+        }
+
+        .btn-inline {
+            width: auto;
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        /* Buttons */
+        button {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            width: 100%;
+            border-radius: 2px;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        button:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+
+        button.secondary {
+            background-color: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+        }
+
+        button.secondary:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        button:focus-visible,
+        .tab:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: 1px;
+        }
+
+        /* Chips */
+        .chip-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .chip {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            cursor: pointer;
+            border: 1px solid transparent;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .chip:hover {
+            opacity: 1;
+            border-color: var(--vscode-focusBorder);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: var(--vscode-panelTitle-inactiveForeground);
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--vscode-panelTitle-activeBorder);
+            border-bottom-color: var(--vscode-panelTitle-activeBorder);
+        }
+
+        .tab:hover:not(.active) {
+            color: var(--vscode-foreground);
+        }
+
+        /* Log / Preview */
+        .log-box {
+            font-family: var(--vscode-editor-font-family, 'Consolas', monospace);
+            font-size: 11px;
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            padding: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 8px;
+        }
+
+        /* Status colors using standard ANSI-like tokens if available, or fallbacks */
+        .text-success {
+            color: var(--success);
+        }
+
+        .text-error {
+            color: var(--error);
+        }
+
+        .text-warning {
+            color: var(--warning);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 2px solid var(--vscode-scrollbarSlider-background);
+            border-top: 2px solid var(--vscode-progressBar-background);
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Helpers */
+        .hidden {
+            display: none !important;
+        }
+
+        .mt-2 {
+            margin-top: 8px;
+        }
+
+        .mb-2 {
+            margin-bottom: 8px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-widget-border);
+            border-radius: 6px;
+            padding: 16px;
+            width: min(460px, calc(100% - 32px));
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .btn-modal {
+            width: auto;
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .btn-modal-secondary {
+            background-color: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+        }
+
+        .btn-modal-secondary:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .btn-modal-primary {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
+        .test-value-input {
+            margin-top: 8px;
+        }
+
+        /* Status badges */
+        .test-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            border: 1px solid var(--vscode-panel-border);
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .test-badge.success {
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .test-badge.error {
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .change-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            border: 1px solid var(--warning);
+            background: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+        }
+
+        .watch-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 8px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            border: 1px dashed var(--vscode-panel-border);
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .watch-status.has-changes {
+            border-color: var(--warning);
+        }
+
+        .btn-update-schema {
+            width: auto;
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .watch-toggle {
+            width: auto;
+            padding: 4px 8px;
+            font-size: 11px;
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+        }
+
+        .watch-toggle:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .watch-toggle.active {
+            border: 1px solid var(--vscode-focusBorder);
+        }
+
+        .watch-icon {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            opacity: 0.8;
+        }
+
+        .spell-card {
+            transition: border-color 0.2s ease;
+        }
+
+        .spell-card:hover {
+            border-color: var(--vscode-focusBorder);
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: var(--vscode-foreground);
+        }
+
+        .btn-link {
+            color: var(--vscode-textLink-foreground);
+            cursor: pointer;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .toggle-btn {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: 1px solid var(--vscode-panel-border);
+        }
+
+        .toggle-btn.active {
+            border-color: var(--vscode-focusBorder);
+            box-shadow: inset 0 0 0 1px var(--vscode-focusBorder);
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <!-- Tabs -->
+    <div class="tabs">
+        <div class="tab active" data-view="create">Create New Tool</div>
+        <div class="tab" data-view="list">My Tools</div>
+    </div>
+
+    <!-- View: Create -->
+    <div id="view-create">
+        <div id="validation-summary" class="validation-summary" role="status" aria-live="polite"></div>
+        <div id="edit-banner" class="edit-banner" role="status" aria-live="polite">
+            <span>Editing existing spell. Name is locked to avoid breaking paths.</span>
+            <button class="secondary btn-inline" data-action="cancel-edit">Exit Edit</button>
+        </div>
+
+        <!-- Step 1: Definition Source -->
+        <div class="section-header">
+            <span class="step-badge">1</span> Define Interface
+        </div>
+
+        <div class="card">
+            <div class="description-text">
+                Start by importing an API definition or creating one manually.
+            </div>
+
+            <!-- Tabs for Source -->
+            <div style="display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid var(--vscode-panel-border)">
+                <button class="secondary"
+                    style="width:auto; border:none; border-bottom:2px solid var(--vscode-focusBorder); border-radius:0"
+                    id="tab-magic">URL / Magic</button>
+                <!-- <button class="secondary" style="width:auto; border:none; border-radius:0">Manual</button> -->
+            </div>
+
+            <label>API Endpoint (Auto-Detect)</label>
+            <div style="display:flex; gap:8px">
+                <select id="magic-method" style="width:80px">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                </select>
+                <input type="text" id="magic-url" placeholder="https://api.example.com/users/{{id}}">
+            </div>
+            <button id="magic-btn" data-action="do-magic" class="mt-2">
+                Start Live Test & Import
+            </button>
+            <div id="magic-status" class="log-box hidden" style="border:none; padding:0; margin-top:8px"></div>
+
+            <div style="margin-top:16px; padding-top:16px; border-top:1px dashed var(--vscode-panel-border)">
+                <label>Or Import OpenAPI Spec</label>
+                <div style="display:flex; gap:8px">
+                    <input type="text" id="openapi-url" placeholder="https://api.example.com/openapi.json">
+                    <button class="secondary" style="width:auto" data-action="import-openapi">Import</button>
+                </div>
+                <div id="openapi-status" class="description-text mt-2"></div>
+            </div>
+
+            <div style="margin-top:16px; padding-top:16px; border-top:1px dashed var(--vscode-panel-border)">
+                <label>Bulk Test Imported Endpoints</label>
+                <div class="description-text">
+                    Runs live checks in parallel and generates a report.
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:8px">
+                    <div>
+                        <label>Concurrency</label>
+                        <input type="number" id="bulk-concurrency" value="6" min="1" max="50">
+                    </div>
+                    <div>
+                        <label>Timeout (ms)</label>
+                        <input type="number" id="bulk-timeout" value="30000" min="1000" max="120000">
+                    </div>
+                    <div>
+                        <label>Rate Limit (RPS)</label>
+                        <input type="number" id="bulk-rps" value="10" min="1" max="1000">
+                    </div>
+                    <div>
+                        <label>Retries</label>
+                        <input type="number" id="bulk-retries" value="2" min="0" max="5">
+                    </div>
+                </div>
+                <button class="secondary mt-2" data-action="bulk-test" style="width:auto">Bulk Test All</button>
+                <div id="bulk-status" class="log-box hidden"></div>
+            </div>
+        </div>
+
+        <!-- Step 2: Configuration -->
+        <div class="section-header">
+            <span class="step-badge">2</span> Configuration
+        </div>
+
+        <div class="card">
+            <label>Tool Name</label>
+            <input type="text" id="name" placeholder="my-mcp-server" data-validate="true" data-validate-field="name">
+
+            <label>Description</label>
+            <textarea id="description" placeholder="What does this tool do?" style="min-height:60px"
+                data-validate="true" data-validate-field="description"></textarea>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px">
+                <div>
+                    <label>Transport</label>
+                    <select id="transport-type" data-action="set-transport-select"> <!-- JS compat proxy -->
+                        <option value="stdio">Stdio (Local)</option>
+                        <option value="sse">SSE (Remote)</option>
+                    </select>
+                    <!-- Compat: Hidden toggles expected by existing JS logic if we don't rewrite JS -->
+                    <div class="toggle-group hidden">
+                        <div id="transport-btn-stdio" class="toggle-btn active"></div>
+                        <div id="transport-btn-sse" class="toggle-btn"></div>
+                    </div>
+                </div>
+                <div>
+                    <label>Auth Method</label>
+                    <select id="auth-type-select" data-action="set-auth-select">
+                        <option value="">None</option>
+                        <option value="apiKey">API Key</option>
+                        <option value="bearer">Bearer Token</option>
+                        <option value="oauth2">OAuth 2.0</option>
+                    </select>
+                    <!-- Compat hidden inputs/toggles for JS -->
+                    <input type="hidden" id="auth-type" value="">
+                    <div class="toggle-group hidden">
+                        <div id="auth-btn-none" class="toggle-btn active"></div>
+                        <div id="auth-btn-key" class="toggle-btn"></div>
+                        <div id="auth-btn-bearer" class="toggle-btn"></div>
+                        <div id="auth-btn-oauth" class="toggle-btn"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auth Fields -->
+            <div id="auth-fields" class="hidden mt-2">
+                <label>Environment Variable Name</label>
+                <input type="text" id="auth-env" placeholder="MY_API_KEY" data-validate="true" data-validate-field="auth-env">
+            </div>
+
+            <div id="auth-oauth-fields" class="hidden mt-2">
+                <div style="display:flex; gap:8px">
+                    <div style="flex:1"><label>Client ID</label><input type="text" id="oauth-client-id" data-validate-field="oauth-client-id"></div>
+                    <div style="flex:1"><label>Client Secret</label><input type="text" id="oauth-client-secret" data-validate-field="oauth-client-secret"></div>
+                </div>
+                <label>Auth URL</label><input type="text" id="oauth-auth-url" data-validate-field="oauth-auth-url">
+                <label>Token URL</label><input type="text" id="oauth-token-url" data-validate-field="oauth-token-url">
+                <label>Scopes</label><input type="text" id="oauth-scopes">
+            </div>
+        </div>
+
+        <!-- Step 3: Tools -->
+        <div class="section-header">
+            <span class="step-badge">3</span> Defined Tools
+            <span id="tool-count" style="margin-left:auto; font-size:10px; opacity:0.7">0 Active</span>
+        </div>
+
+        <div id="tools-list"></div>
+
+        <button class="secondary mt-2" data-action="add-tool">+ Add Manually</button>
+
+        <!-- Generate -->
+        <div style="margin-top:32px; margin-bottom: 40px">
+            <label>Auto-register target</label>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px">
+                <select id="mcp-target" style="flex:1">
+                    <option value="kiro">Kiro (.kiro/settings/mcp.json)</option>
+                    <option value="vscode-workspace">VS Code (workspace .vscode/mcp.json)</option>
+                    <option value="vscode-user">VS Code (user settings mcp.json)</option>
+                    <option value="cursor">Cursor (user mcp.json)</option>
+                    <option value="claude-desktop">Claude Desktop (user config)</option>
+                    <option value="claude-code">Claude Code (.mcp.json)</option>
+                    <option value="continue">Continue (.continue/mcpServers)</option>
+                    <option value="cody">Cody (VS Code settings.json)</option>
+                    <option value="windsurf">Windsurf (copy only)</option>
+                    <option value="jetbrains">JetBrains (copy only)</option>
+                    <option value="zed">Zed (copy only)</option>
+                    <option value="cline">Cline/Roo (copy only)</option>
+                </select>
+                <button class="secondary btn-inline" data-action="copy-config">Copy Config</button>
+            </div>
+            <label style="display:flex; align-items:center; gap:8px; font-size:11px; margin-bottom:8px;">
+                <input type="checkbox" id="auto-register" style="width:auto; margin:0">
+                Write config file when possible
+            </label>
+            <button id="btn-submit" data-action="submit" disabled style="padding:14px">
+                Generate Server Code
+            </button>
+            <div style="text-align:center; margin-top:12px">
+                <span data-action="toggle-preview"
+                    style="cursor:pointer; font-size:11px; color:var(--vscode-textLink-foreground)">View JSON
+                    Preview</span>
+            </div>
+            <div id="preview" class="log-box hidden"></div>
+        </div>
+
+        <!-- Hidden Element for JS Compat -->
+        <span class="btn-link hidden" data-action="toggle-auth-help"></span>
+        <div id="auth-help" class="hidden"></div>
+
+    </div>
+
+    <!-- View: List -->
+    <div id="view-list" class="hidden">
+        <div class="description-text">
+            Your monitored and generated tools.
+        </div>
+        <div id="spells-content"></div>
+    </div>
+
+</div>
+
+<!-- Modals -->
+<div id="test-values-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h3 style="margin-bottom:12px">Test API Values</h3>
+        <div class="description-text">Enter real values for live verification.</div>
+        <div id="test-values-inputs"></div>
+        <div id="test-values-actions" style="display:flex; gap:8px; margin-top:16px">
+            <button class="secondary" data-action="test-cancel" style="width:auto">Cancel</button>
+            <button data-action="test-run" style="flex:1">Run Test</button>
+        </div>
+        <!-- Hidden compat container for JS logic that swaps buttons -->
+        <div class="modal-actions hidden"></div>
+    </div>
+</div>
+
+<script nonce="<!-- NONCE -->">
+    const vscode = acquireVsCodeApi();
+
+    // Security: Escape HTML to prevent XSS
+    function escapeHtml(unsafe) {
+        if (unsafe === undefined || unsafe === null) return '';
+        return String(unsafe)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    let tools = [];
+    let pendingTestToolId = null;
+    let pendingTestParams = [];
+    const watchedSpells = new Map();
+    let editMode = false;
+    let editSpellPath = '';
+
+    // --- Event Delegation (Strict CSP) ---
+    function switchTab(view) {
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        const tab = document.querySelector(`.tab[data-view="${view}"]`);
+        if (tab) tab.classList.add('active');
+        document.getElementById('view-create').classList.toggle('hidden', view !== 'create');
+        document.getElementById('view-list').classList.toggle('hidden', view !== 'list');
+        if (view === 'list') vscode.postMessage({ type: 'getSpells' });
+    }
+
+    document.body.addEventListener('click', e => {
+        const target = e.target;
+
+        // Navigation
+        const tab = target.closest('.tab');
+        if (tab) {
+            switchTab(tab.dataset.view);
+            return;
+        }
+
+        // Magic Chips
+        const chip = target.closest('.chip');
+        if (chip && chip.dataset.example) {
+            loadExample(chip.dataset.example);
+            return;
+        }
+
+        // Action Buttons
+        const btn = target.closest('[data-action]');
+        if (!btn) return;
+
+        const ds = btn.dataset;
+        const action = ds.action;
+        const id = ds.id ? Number(ds.id) : null;
+
+        if (action === 'set-auth') setAuth(ds.type);
+        else if (action === 'set-transport') setTransport(ds.type);
+        else if (action === 'toggle-auth-help') document.getElementById('auth-help').classList.toggle('hidden');
+        else if (action === 'add-tool') addTool();
+        else if (action === 'submit') submit();
+        else if (action === 'cancel-edit') exitEditMode();
+        else if (action === 'copy-config') copyConfig();
+        else if (action === 'do-magic') doMagic();
+        else if (action === 'import-openapi') importFromOpenAPI();
+        else if (action === 'bulk-test') bulkTest();
+        else if (action === 'toggle-preview') togglePreview();
+
+        else if (action === 'magic-cancel') closeMagicModal();
+        else if (action === 'magic-run') runMagicWithValues();
+
+        else if (action === 'remove-tool') removeTool(id);
+        else if (action === 'set-tool-action') setToolAction(id, ds.type);
+        else if (action === 'test-api') testApi(id);
+        else if (action === 'use-schema') useInferredSchema(id);
+        else if (action === 'add-param') addParam(id);
+
+        else if (action === 'test-cancel') closeTestValuesModal();
+        else if (action === 'test-run') runTestWithValues();
+
+        else if (action === 'remove-param') {
+            btn.closest('.param-item').remove();
+            validate();
+        }
+
+        // Watch Mode
+        else if (action === 'watch-toggle') {
+            e.stopPropagation();
+            toggleWatch(ds.name, ds.path);
+        }
+        else if (action === 'ack-changes') {
+            e.stopPropagation();
+            acknowledgeChanges(ds.name);
+        }
+        else if (action === 'open-spell') {
+            vscode.postMessage({ type: 'openSpell', path: ds.path });
+        }
+        else if (action === 'edit-spell') {
+            e.stopPropagation();
+            vscode.postMessage({ type: 'editSpell', spellPath: ds.path, spellName: ds.name });
+        }
+    });
+
+    document.body.addEventListener('input', e => {
+        const target = e.target;
+        if (target.matches('[data-validate]')) validate();
+
+        if (target.dataset.action === 'update-tool') {
+            updateTool(Number(target.dataset.id), target.dataset.field, target.value);
+        }
+    });
+
+    document.body.addEventListener('change', e => {
+        const target = e.target;
+        if (target.matches('[data-validate]')) validate();
+
+        // New Select Handlers
+        if (target.dataset.action === 'set-tool-action-select') {
+            setToolAction(Number(target.dataset.id), target.value);
+        }
+        if (target.dataset.action === 'set-transport-select') {
+            setTransport(target.value);
+        }
+        if (target.dataset.action === 'set-auth-select') {
+            setAuth(target.value);
+        }
+
+        if (target.dataset.action === 'update-tool') {
+            const val = target.type === 'checkbox' ? (target.checked ? 'isolated' : 'unsafe') : target.value;
+            updateTool(Number(target.dataset.id), target.dataset.field, val);
+        }
+
+        if (target.dataset.action === 'update-tool-method') {
+            updateTool(Number(target.dataset.id), 'method', target.value);
+        }
+    });
+
+    function toggleWatch(spellName, spellPath) {
+        if (watchedSpells.has(spellName)) {
+            // Stop watching
+            watchedSpells.delete(spellName);
+            vscode.postMessage({ type: 'stopWatch', spellName, spellPath });
+        } else {
+            // Start watching
+            watchedSpells.set(spellName, { watching: true, changes: [] });
+            vscode.postMessage({ type: 'startWatch', spellName, spellPath });
+        }
+        // Refresh the list to update UI
+        vscode.postMessage({ type: 'getSpells' });
+    }
+
+    function acknowledgeChanges(spellName) {
+        const watchData = watchedSpells.get(spellName);
+        if (watchData) {
+            watchData.changes = [];
+        }
+        vscode.postMessage({ type: 'acknowledgeWatchChanges', spellName });
+        vscode.postMessage({ type: 'getSpells' });
+    }
+
+    // --- Navigation ---
+    // --- Navigation (Legacy) ---
+    // Kept for backup, but main delegation above handles .tab classes
+
+    // --- Core Logic ---
+    function setAuth(type) {
+        document.getElementById('auth-type').value = type;
+        // Update select if it exists
+        const select = document.getElementById('auth-type-select');
+        if (select) select.value = type;
+
+        document.getElementById('auth-fields').classList.toggle('hidden', type !== 'apiKey' && type !== 'bearer');
+        document.getElementById('auth-oauth-fields').classList.toggle('hidden', type !== 'oauth2');
+        validate();
+    }
+
+    function setTransport(type) {
+        document.getElementById('transport-type').value = type;
+        validate();
+    }
+
+    function addTool(data = null) {
+        const id = Date.now();
+        const tool = data || { name: '', description: '', actionType: 'http', method: 'GET', url: '', code: '', parameters: [], execution: 'isolated' };
+        tools.push({ id, ...tool });
+        renderTool(id, tool);
+        updateCount();
+        validate();
+    }
+
+    function removeTool(id) {
+        tools = tools.filter(t => t.id !== id);
+        document.getElementById('tool-' + id).remove();
+        updateCount();
+        validate();
+    }
+
+    function updateCount() {
+        document.getElementById('tool-count').textContent = tools.length + ' Active';
+    }
+
+    function renderTool(id, data) {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.id = 'tool-' + id;
+        div.innerHTML = `
+       <div class="card-header" style="padding-bottom:8px; margin-bottom:12px; border-bottom:1px solid var(--vscode-widget-border)">
+          <div style="display:flex; align-items:center; gap:8px">
+              <span class="step-badge" style="width:16px; height:16px; font-size:9px">T</span>
+              <span class="card-title">Tool Configuration</span>
+          </div>
+          <button class="btn-icon-sm" data-action="remove-tool" data-id="${id}" title="Remove Tool">x</button>
+       </div>
+       
+       <div class="form-group">
+           <label>Tool Name</label>
+           <input type="text" value="${escapeHtml(data.name)}" placeholder="e.g. get-users" data-action="update-tool" data-id="${id}" data-field="name" data-validate-role="tool-name">
+       </div>
+       <div class="form-group">
+           <label>Description</label>
+           <input type="text" value="${escapeHtml(data.description)}" placeholder="Description" data-action="update-tool" data-id="${id}" data-field="description" data-validate-role="tool-desc">
+       </div>
+       
+       <div class="form-group">
+          <label>Action Type</label>
+          <select data-action="set-tool-action-select" data-id="${id}">
+              <option value="http" ${data.actionType === 'http' ? 'selected' : ''}>HTTP Request</option>
+              <option value="script" ${data.actionType === 'script' ? 'selected' : ''}>JavaScript (Node.js)</option>
+          </select>
+       </div>
+       
+       <div id="config-http-${id}" class="${data.actionType !== 'http' ? 'hidden' : ''}">
+           <label>HTTP Configuration</label>
+           <div style="display:flex; gap:8px">
+              <select style="width:90px" data-action="update-tool-method" data-id="${id}">
+                 <option value="GET" ${data.method === 'GET' ? 'selected' : ''}>GET</option>
+                 <option value="POST" ${data.method === 'POST' ? 'selected' : ''}>POST</option>
+                 <option value="PUT" ${data.method === 'PUT' ? 'selected' : ''}>PUT</option>
+                 <option value="DELETE" ${data.method === 'DELETE' ? 'selected' : ''}>DEL</option>
+              </select>
+              <input type="text" value="${escapeHtml(data.url)}" placeholder="https://api.example.com..." data-action="update-tool" data-id="${id}" data-field="url" data-validate-role="tool-url">
+           </div>
+           
+           <div style="display:flex; gap:8px; align-items:center; margin-top:8px">
+              <button class="secondary" id="test-btn-${id}" data-action="test-api" data-id="${id}" style="width:auto">Test Endpoint</button>
+              <span id="test-status-${id}" class="test-badge"></span>
+           </div>
+           
+           <div id="test-result-${id}" class="test-result hidden">
+              <div class="section-header" style="margin-top:0">
+                 <span>Response</span>
+                 <span id="test-content-type-${id}" style="font-weight:400; text-transform:none; margin-left:auto"></span>
+              </div>
+              <pre class="log-box" id="test-body-${id}" style="max-height:150px"></pre>
+              <button class="btn-use-schema" data-action="use-schema" data-id="${id}" style="margin-top:8px">Use as Output Schema</button>
+           </div>
+       </div>
+       
+       <div id="config-script-${id}" class="${data.actionType !== 'script' ? 'hidden' : ''}">
+          <label>Script Body</label>
+          <textarea placeholder="const { input } = args; return { result: input };" data-action="update-tool" data-id="${id}" data-field="code" style="font-family:monospace; min-height:80px" data-validate-role="tool-code">${escapeHtml(data.code || '')}</textarea>
+          <div style="margin-top:8px; display:flex; align-items:center; gap:8px">
+             <input type="checkbox" id="isolated-${id}" ${data.execution === 'isolated' ? 'checked' : ''} data-action="update-tool" data-id="${id}" data-field="execution" style="width:auto">
+             <label for="isolated-${id}" style="font-size:11px; user-select:none; cursor:pointer; color:var(--vscode-input-foreground); margin:0">
+                 Sandboxed Execution <span style="opacity:0.7">(No FS/Net access)</span>
+             </label>
+          </div>
+       </div>
+       
+       <div style="margin-top:16px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center">
+              <label style="margin:0">Parameters</label>
+              <button class="secondary" style="width:auto; padding:2px 8px; font-size:10px" data-action="add-param" data-id="${id}">+ Add</button>
+          </div>
+          <div id="params-${id}" class="param-list"></div>
+       </div>
+    `;
+        document.getElementById('tools-list').appendChild(div);
+        data.parameters.forEach(p => addParam(id, p));
+    }
+
+    function updateTool(id, field, val) {
+        const tool = tools.find(t => t.id === id);
+        if (tool) { tool[field] = val; validate(); }
+    }
+
+    function setToolAction(id, type) {
+        const tool = tools.find(t => t.id === id);
+        if (tool) {
+            tool.actionType = type;
+            const el = document.getElementById('tool-' + id);
+            // Update Select if changed programmatically
+            const sel = el.querySelector('select[data-action="set-tool-action-select"]');
+            if (sel) sel.value = type;
+
+            el.querySelector('#config-http-' + id).classList.toggle('hidden', type !== 'http');
+            el.querySelector('#config-script-' + id).classList.toggle('hidden', type !== 'script');
+            validate();
+        }
+    }
+
+    // --- Params ---
+    function addParam(toolId, data = null) {
+        const tool = tools.find(t => t.id === toolId);
+        if (!tool) return;
+        const p = data || { name: '', type: 'string', required: true };
+        if (!data) tool.parameters.push(p);
+
+        const row = document.createElement('div');
+        row.className = 'param-item';
+        row.innerHTML = `
+           <input type="text" value="${escapeHtml(p.name)}" placeholder="key" style="flex:1" data-validate="true">
+           <select style="width:70px" data-validate="true">
+              <option value="string" ${p.type === 'string' ? 'selected' : ''}>Txt</option>
+              <option value="number" ${p.type === 'number' ? 'selected' : ''}>Num</option>
+              <option value="boolean" ${p.type === 'boolean' ? 'selected' : ''}>Bool</option>
+           </select>
+           <input type="checkbox" ${p.required ? 'checked' : ''} style="width:auto" data-validate="true">
+           <button class="btn-icon-sm" data-action="remove-param">x</button>
+        `;
+        document.getElementById('params-' + toolId).appendChild(row);
+        validate();
+    }
+
+    // --- Validation & Submit ---
+    function getFormData() {
+        const currentTools = tools.map((tool) => {
+            const dom = document.getElementById('tool-' + tool.id);
+            if (!dom) return tool;
+            const paramRows = dom.querySelectorAll('.param-item');
+            const parameters = Array.from(paramRows).map(row => ({
+                name: row.querySelectorAll('input')[0].value,
+                type: row.querySelector('select').value,
+                required: row.querySelectorAll('input')[1].checked
+            })).filter(p => p.name);
+            return { ...tool, parameters };
+        });
+
+        return {
+            name: document.getElementById('name').value,
+            description: document.getElementById('description').value,
+            transport: document.getElementById('transport-type').value,
+            authType: document.getElementById('auth-type').value,
+            authEnvVar: document.getElementById('auth-env').value,
+            autoRegister: document.getElementById('auto-register').checked,
+            mcpTarget: document.getElementById('mcp-target').value,
+            oauthConfig: {
+                clientId: document.getElementById('oauth-client-id').value,
+                clientSecret: document.getElementById('oauth-client-secret').value,
+                authUrl: document.getElementById('oauth-auth-url').value,
+                tokenUrl: document.getElementById('oauth-token-url').value,
+                scopes: document.getElementById('oauth-scopes').value ? document.getElementById('oauth-scopes').value.split(' ') : []
+            },
+            tools: currentTools
+        };
+    }
+
+    function validate() {
+        syncValidationFields();
+        const data = getFormData();
+        vscode.postMessage({ type: 'validate', data });
+        document.getElementById('preview').textContent = JSON.stringify(data, null, 2);
+    }
+
+    function enterEditMode(data) {
+        editMode = true;
+        editSpellPath = data.spellPath || '';
+        document.getElementById('edit-banner').classList.add('visible');
+        const nameInput = document.getElementById('name');
+        nameInput.disabled = true;
+        document.getElementById('btn-submit').textContent = 'Update Spell';
+    }
+
+    function exitEditMode() {
+        editMode = false;
+        editSpellPath = '';
+        document.getElementById('edit-banner').classList.remove('visible');
+        const nameInput = document.getElementById('name');
+        nameInput.disabled = false;
+        document.getElementById('btn-submit').textContent = 'Generate Server Code';
+    }
+
+    function syncValidationFields() {
+        tools.forEach((tool, index) => {
+            const dom = document.getElementById('tool-' + tool.id);
+            if (!dom) return;
+            const nameEl = dom.querySelector('[data-validate-role="tool-name"]');
+            const descEl = dom.querySelector('[data-validate-role="tool-desc"]');
+            const urlEl = dom.querySelector('[data-validate-role="tool-url"]');
+            const codeEl = dom.querySelector('[data-validate-role="tool-code"]');
+            if (nameEl) nameEl.dataset.validateField = `tool-${index}-name`;
+            if (descEl) descEl.dataset.validateField = `tool-${index}-desc`;
+            if (urlEl) urlEl.dataset.validateField = `tool-${index}-url`;
+            if (codeEl) codeEl.dataset.validateField = `tool-${index}-code`;
+        });
+    }
+
+    function clearValidationUI() {
+        document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+        document.querySelectorAll('[aria-invalid="true"]').forEach(el => el.removeAttribute('aria-invalid'));
+        document.querySelectorAll('.error-text').forEach(el => el.remove());
+        const summary = document.getElementById('validation-summary');
+        if (summary) {
+            summary.textContent = '';
+            summary.classList.remove('visible');
+        }
+    }
+
+    function applyValidation(errors) {
+        clearValidationUI();
+        if (!errors || errors.length === 0) return;
+
+        const summary = document.getElementById('validation-summary');
+        const generalErrors = errors.filter(e => e.field === 'general');
+        if (summary && (generalErrors.length || errors.length)) {
+            const msg = generalErrors.length
+                ? generalErrors.map(e => e.message).join('; ')
+                : `${errors.length} field(s) need attention`;
+            summary.textContent = msg;
+            summary.classList.add('visible');
+        }
+
+        errors.forEach(err => {
+            const field = err.field;
+            if (!field || field === 'general') return;
+            const el = document.querySelector(`[data-validate-field="${field}"]`);
+            if (!el) return;
+            el.classList.add('field-error');
+            el.setAttribute('aria-invalid', 'true');
+            const msgEl = document.createElement('div');
+            msgEl.className = 'error-text';
+            msgEl.textContent = err.message;
+            el.insertAdjacentElement('afterend', msgEl);
+        });
+    }
+
+    function submit() {
+        const btn = document.getElementById('btn-submit');
+        btn.textContent = editMode ? 'Updating...' : 'Conjuring...';
+        btn.disabled = true;
+        if (editMode) {
+            vscode.postMessage({ type: 'updateSpell', data: getFormData(), spellPath: editSpellPath });
+        } else {
+            vscode.postMessage({ type: 'generate', data: getFormData() });
+        }
+    }
+
+    function copyConfig() {
+        const name = document.getElementById('name').value.trim();
+        if (!name) {
+            const status = document.getElementById('validation-summary');
+            status.textContent = 'Enter a tool name first to generate config.';
+            status.classList.add('visible');
+            return;
+        }
+        vscode.postMessage({
+            type: 'copyConfig',
+            data: {
+                spellName: name,
+                target: document.getElementById('mcp-target').value
+            }
+        });
+    }
+
+    function loadExample(name) {
+        vscode.postMessage({ type: 'loadExample', example: name });
+    }
+
+    function togglePreview() {
+        document.getElementById('preview').classList.toggle('hidden');
+    }
+
+    function bulkTest() {
+        const status = document.getElementById('bulk-status');
+        status.classList.remove('hidden');
+        status.textContent = 'Running bulk tests...';
+
+        const httpTools = tools.filter(t => t.actionType === 'http' && t.url).map(t => ({
+            name: t.name,
+            method: t.method || 'GET',
+            url: t.url,
+            headers: t.headers,
+            body: t.body,
+            outputSchema: t.outputSchema
+        }));
+
+        vscode.postMessage({
+            type: 'bulkTest',
+            data: {
+                tools: httpTools,
+                options: {
+                    concurrency: Number(document.getElementById('bulk-concurrency').value) || 6,
+                    timeoutMs: Number(document.getElementById('bulk-timeout').value) || 30000,
+                    rps: Number(document.getElementById('bulk-rps').value) || 10,
+                    retries: Number(document.getElementById('bulk-retries').value) || 2,
+                    authType: document.getElementById('auth-type').value,
+                    authEnvVar: document.getElementById('auth-env').value
+                }
+            }
+        });
+    }
+
+    // --- OpenAPI Import ---
+    function importFromOpenAPI() {
+        const url = document.getElementById('openapi-url').value.trim();
+        if (!url) {
+            document.getElementById('openapi-status').textContent = 'Please enter an OpenAPI URL';
+            document.getElementById('openapi-status').style.color = 'var(--error)';
+            return;
+        }
+
+        const status = document.getElementById('openapi-status');
+        status.textContent = 'Fetching and parsing OpenAPI spec...';
+        status.style.color = 'var(--secondary)';
+
+        vscode.postMessage({
+            type: 'importOpenAPI',
+            data: { url }
+        });
+    }
+
+    // --- MAGIC: Zero-Config Auto-Generate ---
+    function doMagic() {
+        const url = document.getElementById('magic-url').value.trim();
+        const method = document.getElementById('magic-method').value;
+        const status = document.getElementById('magic-status');
+        const btn = document.getElementById('magic-btn');
+
+        if (!url) {
+            status.textContent = 'Please enter an API URL';
+            status.style.color = 'var(--error)';
+            return;
+        }
+
+        // Extract URL parameters for test values modal
+        const paramRegex = /\{\{(\w+)\}\}/g;
+        const params = [];
+        let match;
+        while ((match = paramRegex.exec(url)) !== null) {
+            if (!params.includes(match[1])) {
+                params.push(match[1]);
+            }
+        }
+
+        // If there are parameters, collect test values
+        if (params.length > 0) {
+            const testValues = {};
+            const modal = document.getElementById('test-values-modal');
+            const inputsContainer = document.getElementById('test-values-inputs');
+
+            inputsContainer.innerHTML = params.map(param => `
+                    <div class="test-value-input">
+                        <label>{{${param}}}</label>
+                        <input type="text" id="magic-test-${param}" placeholder="Enter value for ${param}" />
+                    </div>
+                `).join('');
+
+            // Override the modal's action button
+            const modalActions = modal.querySelector('.modal-actions');
+            modalActions.innerHTML = `
+                    <button class="btn-modal btn-modal-secondary" data-action="magic-cancel">Cancel</button>
+                    <button class="btn-modal btn-modal-primary" data-action="magic-run">Generate</button>
+                `;
+            const defaultActions = document.getElementById('test-values-actions');
+            if (defaultActions) defaultActions.classList.add('hidden');
+            modalActions.classList.remove('hidden');
+
+            // Store pending magic params
+            window.pendingMagicUrl = url;
+            window.pendingMagicMethod = method;
+            window.pendingMagicParams = params;
+
+            modal.classList.remove('hidden');
+        } else {
+            // No parameters, run magic directly
+            runMagic(url, method, {});
+        }
+    }
+
+    function closeMagicModal() {
+        document.getElementById('test-values-modal').classList.add('hidden');
+        const modalActions = document.querySelector('#test-values-modal .modal-actions');
+        const defaultActions = document.getElementById('test-values-actions');
+        if (modalActions) modalActions.classList.add('hidden');
+        if (defaultActions) defaultActions.classList.remove('hidden');
+        window.pendingMagicUrl = null;
+        window.pendingMagicMethod = null;
+        window.pendingMagicParams = null;
+    }
+
+    function runMagicWithValues() {
+        const testValues = {};
+        for (const param of window.pendingMagicParams || []) {
+            const input = document.getElementById(`magic-test-${param}`);
+            if (input) {
+                testValues[param] = input.value.trim() || `test_${param}`;
+            }
+        }
+        closeMagicModal();
+        runMagic(window.pendingMagicUrl, window.pendingMagicMethod, testValues);
+    }
+
+    function runMagic(url, method, testValues) {
+        const status = document.getElementById('magic-status');
+        const btn = document.getElementById('magic-btn');
+
+        btn.disabled = true;
+        btn.textContent = 'Testing API...';
+        status.textContent = 'Calling API and inferring schema...';
+        status.style.color = 'var(--secondary)';
+
+        vscode.postMessage({
+            type: 'magic',
+            data: { url, method, testValues }
+        });
+    }
+
+    // --- API Testing ---
+    function testApi(toolId) {
+        const tool = tools.find(t => t.id === toolId);
+        if (!tool || tool.actionType !== 'http' || !tool.url) return;
+
+        // Extract URL parameters
+        const paramRegex = /\{\{(\w+)\}\}/g;
+        const params = [];
+        let match;
+        while ((match = paramRegex.exec(tool.url)) !== null) {
+            if (!params.includes(match[1])) {
+                params.push(match[1]);
+            }
+        }
+
+        // If there are parameters, show the modal
+        if (params.length > 0) {
+            pendingTestToolId = toolId;
+            pendingTestParams = params;
+            showTestValuesModal(params);
+        } else {
+            // No parameters, test directly
+            runApiTest(toolId, {});
+        }
+    }
+
+    function showTestValuesModal(params) {
+        const modal = document.getElementById('test-values-modal');
+        const inputsContainer = document.getElementById('test-values-inputs');
+
+        inputsContainer.innerHTML = params.map(param => `
+                <div class="test-value-input">
+                    <label>{{${param}}}</label>
+                    <input type="text" id="test-value-${param}" placeholder="Enter test value for ${param}" />
+                </div>
+            `).join('');
+
+        const modalActions = modal.querySelector('.modal-actions');
+        const defaultActions = document.getElementById('test-values-actions');
+        if (defaultActions) defaultActions.classList.remove('hidden');
+        if (modalActions) modalActions.classList.add('hidden');
+        modal.classList.remove('hidden');
+    }
+
+    function closeTestValuesModal() {
+        document.getElementById('test-values-modal').classList.add('hidden');
+        pendingTestToolId = null;
+        pendingTestParams = [];
+    }
+
+    function runTestWithValues() {
+        const testValues = {};
+        let allFilled = true;
+
+        for (const param of pendingTestParams) {
+            const input = document.getElementById(`test-value-${param}`);
+            const value = input.value.trim();
+            if (!value) {
+                allFilled = false;
+                input.style.borderColor = 'var(--error)';
+            } else {
+                testValues[param] = value;
+                input.style.borderColor = 'var(--border)';
+            }
+        }
+
+        if (!allFilled) return;
+
+        closeTestValuesModal();
+        runApiTest(pendingTestToolId, testValues);
+    }
+
+    function runApiTest(toolId, testValues) {
+        const tool = tools.find(t => t.id === toolId);
+        if (!tool) return;
+
+        // Show loading state
+        const btn = document.getElementById('test-btn-' + toolId);
+        const badge = document.getElementById('test-status-' + toolId);
+        const result = document.getElementById('test-result-' + toolId);
+
+        btn.disabled = true;
+        btn.textContent = 'Testing...';
+        badge.textContent = '';
+        badge.className = 'test-badge';
+        result.classList.add('hidden');
+
+        vscode.postMessage({
+            type: 'testApi',
+            data: {
+                toolId: toolId,
+                url: tool.url,
+                method: tool.method || 'GET',
+                authType: document.getElementById('auth-type').value,
+                authEnvVar: document.getElementById('auth-env').value,
+                testValues
+            }
+        });
+    }
+
+    function useInferredSchema(toolId) {
+        const tool = tools.find(t => t.id === toolId);
+        if (!tool || !tool.inferredSchema) return;
+
+        // **FIX**: Store the inferred schema as the tool's output schema
+        tool.outputSchema = tool.inferredSchema;
+
+        // Clear existing parameters
+        const paramsContainer = document.getElementById('params-' + toolId);
+        paramsContainer.innerHTML = '';
+        tool.parameters = [];
+
+        // Add URL parameters first
+        if (tool.urlParameters && tool.urlParameters.length > 0) {
+            tool.urlParameters.forEach(param => {
+                addParam(toolId, { name: param, type: 'string', required: true });
+            });
+        }
+
+        // Show success feedback
+        const btn = document.querySelector(`#test-result-${toolId} .btn-use-schema`);
+        const originalText = btn.textContent;
+        btn.textContent = 'Schema Applied!';
+        btn.style.background = 'var(--success)';
+
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = '';
+        }, 2000);
+
+        validate();
+    }
+
+    // --- Events ---
+    window.addEventListener('message', e => {
+        const msg = e.data;
+        if (msg.type === 'validationResult') {
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = msg.errors.length > 0;
+            btn.textContent = msg.errors.length
+                ? 'Fix Issues to Conjure'
+                : (editMode ? 'Update Spell' : 'Generate Spell');
+            applyValidation(msg.errors);
+        }
+        if (msg.type === 'tabChanged') {
+            const view = msg.tab === 'spells' ? 'list' : 'create';
+            switchTab(view);
+        }
+        if (msg.type === 'generateResult') {
+            const btn = document.getElementById('btn-submit');
+            btn.textContent = msg.success ? 'Success!' : 'Failed';
+            if (!msg.success) btn.disabled = false;
+            setTimeout(() => {
+                if (!btn.disabled) btn.textContent = editMode ? 'Update Spell' : 'Generate Spell';
+            }, 2000);
+            if (msg.success && editMode) {
+                exitEditMode();
+            }
+        }
+        if (msg.type === 'editSpellLoaded') {
+            switchTab('create');
+            document.getElementById('name').value = msg.data.name;
+            document.getElementById('description').value = msg.data.description;
+            document.getElementById('transport-type').value = msg.data.transport || 'stdio';
+            setTransport(document.getElementById('transport-type').value);
+            setAuth(msg.data.authType || '');
+            document.getElementById('auth-env').value = msg.data.authEnvVar || '';
+            document.getElementById('oauth-client-id').value = msg.data.oauthConfig?.clientId || '';
+            document.getElementById('oauth-client-secret').value = msg.data.oauthConfig?.clientSecret || '';
+            document.getElementById('oauth-auth-url').value = msg.data.oauthConfig?.authUrl || '';
+            document.getElementById('oauth-token-url').value = msg.data.oauthConfig?.tokenUrl || '';
+            document.getElementById('oauth-scopes').value = (msg.data.oauthConfig?.scopes || []).join(' ');
+            tools = [];
+            document.getElementById('tools-list').innerHTML = '';
+            msg.data.tools.forEach(toolData => addTool(toolData));
+            enterEditMode(msg.data);
+            validate();
+        }
+        if (msg.type === 'editSpellError') {
+            const status = document.getElementById('validation-summary');
+            status.textContent = msg.message || 'Failed to load spell for editing.';
+            status.classList.add('visible');
+        }
+        if (msg.type === 'exampleLoaded') {
+            if (editMode) exitEditMode();
+            document.getElementById('name').value = msg.data.name;
+            document.getElementById('description').value = msg.data.description;
+            // Reset tools
+            tools = [];
+            document.getElementById('tools-list').innerHTML = '';
+            addTool({
+                name: msg.data.name,
+                description: msg.data.description,
+                actionType: msg.data.actionType,
+                method: msg.data.method,
+                url: msg.data.url,
+                code: msg.data.code,
+                parameters: msg.data.parameters
+            });
+        }
+        if (msg.type === 'spellsList') {
+            const list = document.getElementById('spells-content');
+            if (!msg.spells.length) list.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px">No spells found in Grimoire.</div>';
+            else {
+                list.innerHTML = msg.spells.map(s => {
+                    const isWatched = watchedSpells.has(s.name);
+                    const watchData = watchedSpells.get(s.name);
+                    const hasChanges = watchData && watchData.changes && watchData.changes.length > 0;
+                    return `
+                   <div class="card spell-card" style="padding:12px; position:relative" data-action="open-spell" data-path="${escapeHtml(s.path.replace(/\\/g, '\\\\'))}">
+                      ${hasChanges ? '<span class="change-badge">' + watchData.changes.length + ' change' + (watchData.changes.length > 1 ? 's' : '') + '</span>' : ''}
+                      <div style="display:flex; justify-content:space-between; align-items:flex-start">
+                        <div style="flex:1; cursor:pointer"> 
+                          <div class="card-title" style="font-size:13px">${escapeHtml(s.name)}</div>
+                          <div style="font-size:11px; color:var(--text-muted); margin-top:4px">${escapeHtml(s.description)}</div>
+                        </div>
+                        <button class="watch-toggle ${isWatched ? 'active' : ''}" data-action="watch-toggle" data-name="${escapeHtml(s.name)}" data-path="${escapeHtml(s.path.replace(/\\/g, '\\\\'))}">
+                          <span class="watch-icon">${isWatched ? 'On' : 'Off'}</span>
+                          <span>${isWatched ? 'Watching' : 'Watch'}</span>
+                        </button>
+                      </div>
+                      <div style="display:flex; gap:8px; margin-top:8px">
+                        <button class="secondary btn-inline" data-action="edit-spell" data-name="${escapeHtml(s.name)}" data-path="${escapeHtml(s.path.replace(/\\/g, '\\\\'))}">Edit</button>
+                      </div>
+                      ${hasChanges ? `
+                        <div class="watch-status has-changes">
+                          <span>API schema changed: ${watchData.changes.map(c => escapeHtml(c.path)).join(', ')}</span>
+                          <button class="btn-update-schema" data-action="ack-changes" data-name="${escapeHtml(s.name)}">Acknowledge</button>
+                        </div>
+                      ` : (isWatched ? `
+                        <div class="watch-status">
+                          <span>Watching for API changes</span>
+                        </div>
+                      ` : '')}
+                   </div>
+                 `;
+                }).join('');
+            }
+        }
+
+        // Handle OpenAPI import results
+        if (msg.type === 'openapiImportResult') {
+            const status = document.getElementById('openapi-status');
+            if (msg.success) {
+                status.textContent = `Imported ${msg.tools.length} endpoints from ${msg.apiName}`;
+                status.style.color = 'var(--success)';
+
+                // Clear existing tools
+                tools = [];
+                document.getElementById('tools-list').innerHTML = '';
+
+                // Add all imported tools
+                msg.tools.forEach(toolData => {
+                    addTool(toolData);
+                });
+
+                // Auto-fill spell name if empty
+                const nameField = document.getElementById('name');
+                if (!nameField.value) {
+                    nameField.value = msg.suggestedName || 'api-tools';
+                }
+
+                validate();
+            } else {
+                status.textContent = `Error: ${msg.error}`;
+                status.style.color = 'var(--error)';
+            }
+        }
+
+        if (msg.type === 'bulkTestResult') {
+            const status = document.getElementById('bulk-status');
+            status.classList.remove('hidden');
+            if (!msg.success) {
+                status.textContent = `Bulk test failed: ${msg.error}`;
+                return;
+            }
+            const report = msg.report;
+            const lines = [];
+            lines.push(`Bulk test complete: ${report.passed}/${report.total} passed, ${report.failed} failed, ${report.changed} changed`);
+            if (msg.reportPath) {
+                lines.push(`Report: ${msg.reportPath}`);
+            }
+            report.results.forEach(r => {
+                const state = r.ok ? 'PASS' : 'FAIL';
+                const drift = r.drift && r.drift.length > 0 ? ` | drift: ${r.drift.length}` : '';
+                const code = r.statusCode ? ` ${r.statusCode}` : '';
+                lines.push(`${state}${code} ${r.method} ${r.url}${drift}`);
+                if (!r.ok && r.error) {
+                    lines.push(`  error: ${r.error}`);
+                }
+            });
+            status.textContent = lines.join('\n');
+        }
+
+        // Handle Magic result
+        if (msg.type === 'magicResult') {
+            const status = document.getElementById('magic-status');
+            const btn = document.getElementById('magic-btn');
+
+            btn.disabled = false;
+            btn.textContent = 'Generate Complete Spell';
+
+            if (msg.success && msg.spell) {
+                status.innerHTML = '<span style="color: var(--success)">Generated: ' + escapeHtml(msg.spell.name) + '</span>';
+
+                if (msg.warnings && msg.warnings.length > 0) {
+                    const safeWarnings = msg.warnings.map(w => escapeHtml(w)).join('<br>');
+                    status.innerHTML += '<br><span style="color: #f59e0b; font-size: 10px">' + safeWarnings + '</span>';
+                }
+
+                // Auto-fill the entire form
+                document.getElementById('name').value = msg.spell.name;
+                document.getElementById('description').value = msg.spell.description;
+
+                // Clear existing tools and add the magic tool
+                tools = [];
+                document.getElementById('tools-list').innerHTML = '';
+
+                const toolData = {
+                    name: msg.spell.tool.name,
+                    description: msg.spell.tool.description,
+                    actionType: 'http',
+                    method: msg.spell.tool.method,
+                    url: msg.spell.tool.url,
+                    parameters: msg.spell.tool.parameters || [],
+                    outputSchema: msg.spell.tool.outputSchema
+                };
+
+                addTool(toolData);
+
+                // If auth suggested, set it
+                if (msg.spell.suggestedAuth) {
+                    setAuth(msg.spell.suggestedAuth.type);
+                    status.innerHTML += '<br><span style="color: #f59e0b; font-size: 10px">Tip: ' + escapeHtml(msg.spell.suggestedAuth.reason) + '</span>';
+                }
+
+                validate();
+
+            } else {
+                status.innerHTML = '<span style="color: var(--error)">Error: ' + escapeHtml(msg.error) + '</span>';
+            }
+        }
+
+        // Handle API test results
+        if (msg.type === 'testApiResult') {
+            const btn = document.getElementById('test-btn-' + msg.toolId);
+            const badge = document.getElementById('test-status-' + msg.toolId);
+            const result = document.getElementById('test-result-' + msg.toolId);
+            const body = document.getElementById('test-body-' + msg.toolId);
+            const contentType = document.getElementById('test-content-type-' + msg.toolId);
+
+            btn.disabled = false;
+            btn.textContent = 'Test API';
+
+            if (msg.success) {
+                badge.textContent = `OK ${msg.statusCode}`;
+                badge.className = 'test-badge success';
+                result.classList.remove('hidden');
+                contentType.textContent = msg.contentType || '';
+
+                // Pretty print response (truncate if too long)
+                const responseStr = JSON.stringify(msg.response, null, 2);
+                body.textContent = responseStr.length > 2000
+                    ? responseStr.substring(0, 2000) + '\n... (truncated)'
+                    : responseStr;
+
+                // Store inferred schema and URL params for later use
+                const tool = tools.find(t => t.id === msg.toolId);
+                if (tool) {
+                    tool.inferredSchema = msg.inferredSchema;
+                    tool.urlParameters = msg.urlParameters;
+                }
+            } else {
+                badge.textContent = `Error: ${msg.error}`;
+                badge.className = 'test-badge error';
+                result.classList.add('hidden');
+            }
+        }
+
+        // Handle Watch Mode messages
+        if (msg.type === 'watchStarted') {
+            watchedSpells.set(msg.spellName, { watching: true, changes: [] });
+            vscode.postMessage({ type: 'getSpells' });
+        }
+
+        if (msg.type === 'watchStopped') {
+            watchedSpells.delete(msg.spellName);
+            vscode.postMessage({ type: 'getSpells' });
+        }
+
+        if (msg.type === 'watchChangesDetected') {
+            const watchData = watchedSpells.get(msg.spellName);
+            if (watchData) {
+                watchData.changes = msg.changes;
+            }
+            vscode.postMessage({ type: 'getSpells' });
+        }
+
+        if (msg.type === 'watchState') {
+            // Restore watch state from backend
+            for (const [name, data] of Object.entries(msg.state)) {
+                watchedSpells.set(name, data);
+            }
+            vscode.postMessage({ type: 'getSpells' });
+        }
+    });
+
+    // Init
+    addTool();
+</script>
+</body>
+
+</html>

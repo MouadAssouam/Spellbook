@@ -72,19 +72,19 @@ export function showOutput(): void {
  * Logs a spell creation event.
  */
 export function logSpellCreation(name: string, actionType: string): void {
-  log(`🔮 Creating spell: ${name} (${actionType})`);
+  log(` Creating spell: ${name} (${actionType})`);
 }
 
 /**
  * Logs file generation.
  */
 export function logFileGeneration(files: string[]): void {
-  log(`📄 Generated files: ${files.join(', ')}`);
+  log(` Generated files: ${files.join(', ')}`);
 }
 
 /**
  * Logs successful completion.
  */
 export function logSuccess(name: string, path: string): void {
-  log(`✨ Spell "${name}" created successfully at ${path}`);
+  log(` Spell "${name}" created successfully at ${path}`);
 }

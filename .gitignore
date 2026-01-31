@@ -39,3 +39,6 @@ Thumbs.db
 # IMPORTANT: Do NOT ignore .kiro/ directory
 # It is required for Kiroween hackathon submission
 # !.kiro/
+
+# Kiro data may include secrets (spells, tokens)
+.kiro/data/

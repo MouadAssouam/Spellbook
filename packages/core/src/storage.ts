@@ -46,12 +46,12 @@ export async function loadSpells(filePath: string = DEFAULT_SPELLS_FILE): Promis
   try {
     const data = await fs.readFile(filePath, 'utf-8');
     const parsed = JSON.parse(data);
-    
+
     // Validate it's an array
     if (!Array.isArray(parsed)) {
       return new Map();
     }
-    
+
     // Validate each spell against schema, skip invalid entries
     const validSpells = new Map<string, Spell>();
     for (const item of parsed) {
@@ -61,7 +61,7 @@ export async function loadSpells(filePath: string = DEFAULT_SPELLS_FILE): Promis
       }
       // Invalid spells are silently skipped to prevent corrupted data from breaking the system
     }
-    
+
     return validSpells;
   } catch (error) {
     // File doesn't exist or is corrupted - return empty map
@@ -91,9 +91,9 @@ export async function saveSpells(
   // Ensure directory exists
   const dir = dirname(filePath);
   await fs.mkdir(dir, { recursive: true });
-  
-  // Convert map to array and save as JSON
-  const data = Array.from(spells.values());
+
+  // Convert map to array and save as JSON (redact secrets)
+  const data = Array.from(spells.values()).map(sanitizeSpell);
   await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
 }
 
@@ -109,4 +109,28 @@ export async function clearSpells(filePath: string = DEFAULT_SPELLS_FILE): Promi
   } catch {
     // File doesn't exist, nothing to clear
   }
+}
+
+function sanitizeSpell(spell: Spell): Spell {
+  if (spell.auth?.type !== 'oauth2') {
+    return spell;
+  }
+
+  const config = spell.auth.config;
+  const { clientSecret, ...rest } = config as {
+    clientSecret?: string;
+    clientSecretEnvVar?: string;
+    [key: string]: unknown;
+  };
+
+  return {
+    ...spell,
+    auth: {
+      ...spell.auth,
+      config: {
+        ...rest,
+        clientSecretEnvVar: rest.clientSecretEnvVar ?? 'CLIENT_SECRET',
+      } as any,
+    },
+  };
 }

@@ -1,479 +1,254 @@
-# 🔮 Spellbook
+# Spellbook
 
 [![npm version](https://img.shields.io/npm/v/spellbook-mcp.svg)](https://www.npmjs.com/package/spellbook-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-71%20passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
 
-**Visual MCP Tool Builder for VS Code and all forks**
+**The MCP generator that tests your APIs**
 
-> For developers who want to build MCP tools without writing boilerplate.
-
-Build MCP (Model Context Protocol) tools in 30 seconds instead of hours. 
-
-**Optimized for Kiro** — fully tested and working. Support for other VS Code forks (Cursor, Windsurf, etc.) coming soon.
-
-<!-- TODO: Add screenshot/GIF of the Haunted Grimoire sidebar here -->
-
-## 😫 The Problem
-
-Creating an MCP tool today requires:
-- Understanding MCP protocol (stdio, JSON-RPC)
-- Setting up Node.js project structure
-- Writing ~100 lines of server boilerplate
-- Handling input validation manually
-- Setting up Docker for deployment
-- Writing documentation
-
-**Time: 2-4 hours per tool** for someone who knows what they're doing.
-
-## ✅ The Solution
-
-With Spellbook:
-1. Fill in name, description, URL or script
-2. Click "Summon"
-3. Get a complete, working MCP server
-
-**Time: 30 seconds.**
-
-### Three Ways to Use Spellbook
-
-| Method | Install | Best For |
-|--------|---------|----------|
-| **npm package** | `npx spellbook-mcp` | Zero setup, works anywhere |
-| **VS Code Extension** | Search "Spellbook" in Extensions | Visual UI, sidebar, live preview |
-| **MCP Tool** | Add to mcp.json | Conversational creation via Kiro |
-
-**Fastest way:** Just add to your `mcp.json` and ask Kiro to create spells - no clone, no build, no extension needed.
-
-## 📑 Table of Contents
-
-- [The Problem](#-the-problem)
-- [The Solution](#-the-solution)
-- [The Meta Moment](#-the-meta-moment)
-- [Features](#-features)
-- [Project Stats](#-project-stats)
-- [Architecture](#️-architecture)
-- [Installation](#-installation)
-- [Usage Guide](#-usage-guide) ⬅️ **Start here!**
-- [Quick Start](#-quick-start)
-- [Generated Output](#-generated-output)
-- [Example Spells](#-example-spells)
-- [Self-Enforcing Architecture](#️-self-enforcing-architecture)
-- [Development](#️-development)
-- [Project Structure](#-project-structure)
-- [Kiroween Hackathon](#-kiroween-hackathon)
-- [License](#-license)
+> AI guesses from docs. Spellbook verifies with real requests.
 
 ---
 
-## ✨ The Meta Moment
+## Why This Exists
 
-**Spellbook is an MCP tool that builds MCP tools.** 🤯
+You ask an AI to generate an MCP tool. It produces clean TypeScript. It compiles. It looks right.
 
-You can use Spellbook inside Kiro to create more MCP tools, including another Spellbook!
+Then you deploy it, and:
 
----
+- The endpoint returns a different schema than the docs said
+- The auth header format changed last month
+- A field is sometimes null (the docs did not mention that)
+- Your agent fails at 3am and nobody knows why
 
-## 🎯 Features
-
-- **Haunted Grimoire Sidebar** - Embedded spell builder with spooky animations and live preview
-- **Visual Spell Builder** - Create MCP tools through command palette or sidebar
-- **Zero Boilerplate** - Generates Dockerfile, package.json, server code, and README
-- **HTTP & Script Actions** - Support for API calls and custom JavaScript logic
-- **Template Variables** - Use `{{var}}` syntax in URLs, headers, and body
-- **Persistent Storage** - Spells are saved to `.kiro/data/spells.json`
-- **Example Spells** - Start from pre-built examples (GitHub Fetcher, Weather API, Calculator)
-- **Compiler Architecture** - Schema → Templates → Generator pipeline
-- **Two-Layer Validation** - Zod at build-time, Ajv at runtime
-- **Self-Enforcing Architecture** - Prevents invalid, broken, or inconsistent tools
+**The root cause**: AI cannot call APIs. It reads documentation and guesses. Documentation lies.
 
 ---
 
-## 📊 Project Stats
+## The Difference
 
-| Metric | Value |
-|--------|-------|
-| Test Count | **71 passing** |
-| Time Saved | **75%** (36h → 9h with Kiro) |
-| Source Lines | ~1,400 |
-| Generated Files | 4 per spell |
+| Capability | AI Generators | Spellbook |
+| --- | --- | --- |
+| Generate MCP boilerplate | Yes | Yes |
+| Actually call the API | No | Yes |
+| Show you the real response | No | Yes |
+| Infer schema from live data | No | Yes |
+| Detect auth requirements | No | Yes |
+| Tell you it works before you deploy | No | Yes |
 
-```
-npm test
- ✓ 6 test files | 71 tests passed
-```
-
----
-
-## 🏗️ Architecture
-
-Spellbook is a **domain-specific compiler** for MCP tools:
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  SCHEMA LAYER   │ ──▶ │ TEMPLATE ENGINE │ ──▶ │   GENERATOR     │
-│     (Zod)       │     │  (Pure funcs)   │     │ (File emission) │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-   Spell JSON ──────────────────────────────────▶ MCP Server Files
-```
-
-**Three components:**
-1. **VS Code Extension** - Haunted Grimoire UI for spell creation
-2. **Core Compiler** - Schema validation → Template transforms → File generation
-3. **MCP Tool** - `create_spell` and `list_spells` via stdio
-
-**Two-layer validation:** Zod validates at build-time, Ajv validates at runtime in generated servers.
+**Spellbook does not generate code that should work. It generates code that already worked once.**
 
 ---
 
-## 📖 Usage Guide
+## How It Works
 
-**New to Spellbook?** Check out the **[Complete Usage Guide](./USAGE.md)** for step-by-step tutorials on:
+```text
+1. Enter URL    -> https://api.github.com/users/{{username}}
+2. Click Test   -> Spellbook calls the API with real values
+3. See Response -> Status 200, actual JSON displayed
+4. Review       -> Schema inferred from the real response
+5. Generate     -> MCP server code that matches reality
+```
 
-- 🎨 **VS Code Extension** — Visual sidebar walkthrough with screenshots
-- 💬 **MCP Tool** — Create spells by chatting with Kiro
-- 📦 **npm Library** — Programmatic integration for your own tools
-- 🧪 **Complete Examples** — Build a Slack notifier from scratch
+The schema is not guessed from documentation. It is extracted from the actual API response you just saw.
 
 ---
 
-## 📥 Installation
-
-### npm Package (Fastest)
-
-```bash
-# Use directly with npx (no install needed)
-npx spellbook-mcp
-
-# Or install as a library
-npm install spellbook-mcp
-```
-
-### MCP Tool (Conversational)
-
-**Option A: Via npx (Recommended)**
-
-Add to your `.kiro/settings/mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "spellbook": {
-      "command": "npx",
-      "args": ["spellbook-mcp"]
-    }
-  }
-}
-```
-
-**Option B: From Source (For Development)**
-
-Clone the repo and build:
-```bash
-git clone https://github.com/MouadAssouam/Spellbook.git
-cd Spellbook
-npm install
-npm run build
-```
-
-Add to your `.kiro/settings/mcp.json`:
-```json
-{
-  "mcpServers": {
-    "spellbook": {
-      "command": "node",
-      "args": ["./packages/core/dist/spellbook-mcp.js"]
-    }
-  }
-}
-```
-
-> **Note:** Running from source requires the `packages/` folder and `tsconfig.json` to be present.
-
-Then ask Kiro: *"Create a spell that fetches GitHub issues"*
+## Quick Start
 
 ### VS Code Extension
 
-**Option A: Install from Marketplace (Recommended)**
+1. Install from marketplace: search **Spellbook**
+2. Open sidebar (Spellbook icon)
+3. Paste API URL
+4. Click **Test API**
+5. See real response -> Generate
 
-1. Open VS Code / Kiro / Cursor / Windsurf
-2. Go to Extensions (`Ctrl+Shift+X`)
-3. Search for **"Spellbook"**
-4. Click **Install**
-
-Or install via command line:
-```bash
-code --install-extension MouadAssouam.spellbook-vscode
-```
-
-**Option B: Download from GitHub**
-
-1. Download `spellbook-vscode-0.1.1.vsix` from [Releases](https://github.com/MouadAssouam/Spellbook/releases)
-2. Open VS Code / Kiro / Cursor / Windsurf
-3. Go to Extensions (`Ctrl+Shift+X`)
-4. Click `...` → **Install from VSIX...**
-5. Select the downloaded `.vsix` file
-
-**Option C: Build from source**
-```bash
-cd extensions/vscode
-npm install
-npm run package
-```
-
----
-
-## 🚀 Quick Start
-
-### VS Code Extension
-
-1. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
-2. Run **"Spellbook: Create MCP Tool"**
-3. Choose "Create New Spell" or "Use Example Spell"
-4. Fill in the spell details:
-   - **Name**: kebab-case, 3-50 characters (e.g., `github-fetcher`)
-   - **Description**: 100-500 characters explaining what it does
-   - **Action Type**: HTTP Request or JavaScript Script
-5. Watch the magic happen! ✨
-
-### MCP Tool (Meta Mode)
-
-**Option A: Via npx (no install needed)**
-
-Add to your `.kiro/settings/mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "spellbook": {
-      "command": "npx",
-      "args": ["spellbook-mcp"]
-    }
-  }
-}
-```
-
-**Option B: From source**
+### npm Package
 
 ```bash
-git clone https://github.com/MouadAssouam/Spellbook.git
-cd Spellbook && npm install && npm run build
+npm install @spellbook/core
 ```
 
-```json
-{
-  "mcpServers": {
-    "spellbook": {
-      "command": "node",
-      "args": ["./packages/core/dist/spellbook-mcp.js"]
-    }
-  }
+```ts
+import { magicFromUrl } from '@spellbook/core';
+
+// One function: URL -> tested, verified spell
+const result = await magicFromUrl('https://api.github.com/users/octocat');
+
+if (result.success) {
+  console.log(result.spell);
+  // Schema was inferred from the actual response
+  // Not guessed from docs
 }
 ```
 
-Then use it in Kiro:
-- `create_spell` - Create a new MCP tool
-- `list_spells` - List all your spells
+Or use the lower-level API:
+
+```ts
+import { generateMCPServerV2, inferSchema } from '@spellbook/core';
+
+// Step 1: Test the API yourself
+const response = await fetch('https://api.github.com/users/octocat');
+const data = await response.json();
+
+// Step 2: Infer schema from real data
+const outputSchema = inferSchema(data);
+
+// Step 3: Generate with verified schema
+const spell = {
+  id: crypto.randomUUID(),
+  name: 'github-user',
+  description: 'Fetches GitHub user profile. Schema verified against live API response.',
+  transport: 'stdio',
+  tools: [{
+    name: 'get-user',
+    description: 'Fetches a GitHub user by username. Returns profile data.',
+    inputSchema: {
+      type: 'object',
+      properties: { username: { type: 'string' } },
+      required: ['username']
+    },
+    outputSchema,
+    action: {
+      type: 'http',
+      config: { url: 'https://api.github.com/users/{{username}}', method: 'GET' }
+    }
+  }]
+};
+
+const files = generateMCPServerV2(spell);
+```
 
 ---
 
-## 📦 Generated Output
+## OpenAPI Import
 
-For each spell, Spellbook generates a complete MCP server:
+Have a Swagger spec? Import all endpoints at once:
 
+```ts
+import { parseOpenApiSpec } from '@spellbook/core';
+
+const spec = await fetch('https://petstore.swagger.io/v2/swagger.json').then(r => r.text());
+const parsed = parseOpenApiSpec(spec);
+
+// parsed.tools = array of tool definitions
+// parsed.auth = detected auth type (apiKey, bearer, oauth2)
 ```
-your-spell/
-├── Dockerfile        # Container configuration (Node.js 20 Alpine)
-├── package.json      # Dependencies (@modelcontextprotocol/sdk, ajv)
-├── index.js          # MCP server with stdio transport & Ajv validation
-└── README.md         # Usage instructions with mcp.json config
-```
 
-### Using Your Generated Spell
+---
+
+## Bulk Test (New)
+
+Bulk test imported endpoints in parallel, with rate limiting, retries, and schema drift detection.
+
+### Sidebar (Discovery)
+- Import OpenAPI
+- Configure concurrency / timeout / RPS / retries
+- Click **Bulk Test All**
+- A report is saved as `spellbook-report.json`
+
+### CLI (CI/CD)
 
 ```bash
-# Build the Docker image
-cd your-spell
-docker build -t your-spell .
-
-# Add to mcp.json
-{
-  "mcpServers": {
-    "your-spell": {
-      "command": "docker",
-      "args": ["run", "--rm", "-i", "your-spell"]
-    }
-  }
-}
+spellbook test --all   --spells .kiro/data/spells.json   --report spellbook-report.json   --concurrency 6   --timeout 30000   --rps 10   --retries 2
 ```
+
+Exit code is `2` if any endpoint fails, so it can be used as a CI gate.
 
 ---
 
-## 🎯 Example Spells
+## Generated Output
 
-### GitHub Fetcher
-```json
-{
-  "name": "github-fetcher",
-  "action": {
-    "type": "http",
-    "config": {
-      "url": "https://api.github.com/repos/{{owner}}/{{repo}}/issues",
-      "method": "GET"
-    }
-  }
-}
+```text
+your-tool/
+|-- Dockerfile      # Node.js 20 Alpine, non-root user
+|-- package.json    # Minimal dependencies
+|-- index.js        # MCP server implementation
+`-- README.md       # Usage instructions
 ```
 
-### Weather API
-```json
-{
-  "name": "weather-api",
-  "action": {
-    "type": "http",
-    "config": {
-      "url": "https://api.openweathermap.org/data/2.5/weather?q={{city}}&appid={{apiKey}}",
-      "method": "GET"
-    }
-  }
-}
-```
-
-### Calculator
-```json
-{
-  "name": "calculator",
-  "action": {
-    "type": "script",
-    "config": {
-      "runtime": "node",
-      "code": "const { a, b, op } = input; return { result: op === 'add' ? a + b : a - b };"
-    }
-  }
-}
-```
-
-> **Note:** Template variables (`{{var}}`) work in URLs, headers, and request bodies.
+Standard MCP server. Works with Claude Desktop, Cursor, Kiro, Windsurf, any MCP client.
 
 ---
 
-## 🛡️ Self-Enforcing Architecture
+## Runtime Utilities (Included)
 
-**Spellbook doesn't just generate code. It ENFORCES the rules.**
+The package includes optional utilities for common production patterns:
 
-| Rule | Enforcement |
-|------|-------------|
-| Kebab-case names | Regex validation |
-| Name length (3-50) | Min/max validation |
-| Description (100-500 chars) | Length validation |
-| Valid URL format | URL schema validation |
-| Valid HTTP method | Enum validation |
-| Non-empty script code | Min length validation |
-| Consistent output | Always: `Dockerfile`, `package.json`, `index.js`, `README.md` |
-| Runtime validation | Ajv in generated servers |
-| Duplicate prevention | Storage validation |
+```ts
+import { runtime } from '@spellbook/core';
 
-**Without Self-Enforcement:**
-```
-/your-tool/
-    read_me.md        ← wrong name
-    dockerFile        ← wrong case
+// Structured logging
+runtime.log.info('tool.called', { tool: 'get-user', input });
+
+// Circuit breaker
+const breaker = new runtime.CircuitBreaker({ threshold: 5, timeout: 30000 });
+const result = await breaker.execute(() => fetch(url));
+
+// Retry with backoff
+const data = await runtime.retry(() => fetch(url), { maxAttempts: 3 });
 ```
 
-**With Spellbook:**
-```
-/your-spell/
-    Dockerfile        ✓ exact name
-    package.json      ✓ exact name
-    index.js          ✓ exact name  
-    README.md         ✓ exact name
-```
+These are simple defaults, not a framework. Use them or do not.
 
 ---
 
-## 🛠️ Development
+## Watch Mode
 
-```bash
-npm install      # Install dependencies
-npm run build    # Build all packages
-npm test         # Run tests
-npm run clean    # Clean build artifacts
+Automatic API change detection for generated tools.
+
+```text
+You enable Watch on a spell
+    |
+    v
+Spellbook periodically calls the API
+    |
+    v
+If the response schema changes
+    |
+    v
+You get notified
+    |
+    v
+One click to update the spell
 ```
 
----
-
-## 📁 Project Structure
-
-```
-spellbook/
-├── packages/core/          # THE COMPILER
-│   └── src/
-│       ├── types.ts        # Schema Layer (Zod)
-│       ├── templates.ts    # Template Engine
-│       ├── generator.ts    # Generator
-│       └── spellbook-mcp.ts
-├── extensions/vscode/      # VS Code Extension
-│   └── src/
-│       ├── providers/      # Sidebar webview
-│       ├── commands/       # Command handlers
-│       └── webview/        # Grimoire panel
-├── examples/               # Example spells
-└── .kiro/                  # Specs, steering, hooks
-```
+AI generates once and forgets. Spellbook watches.
 
 ---
 
-## 🏆 Kiroween Hackathon
+## What This Is NOT
 
-Built for the [Kiroween Hackathon](https://kiroween.devpost.com) in the **Frankenstein** category.
+- Not a deployment platform
+- Not a runtime framework
+- Not an observability suite
+- Not trying to replace your existing tools
 
-### 🧟 Why Frankenstein?
-
-Spellbook is a chimera stitched from incompatible parts:
-
-| Component | Domain |
-|-----------|--------|
-| VS Code Extension | Frontend UX |
-| MCP Stdio Server | Backend Protocol |
-| Template Engine | Code Generation |
-| Ajv JSON Schema | Runtime Validation |
-| Docker Containerization | Deployment |
-| Recursive Meta-tooling | 🤯 |
-
-These domains normally never live together. Spellbook merges them into a single recursive system that **builds tools that build tools... that can build themselves.**
-
-### 🔧 How We Used Kiro
-
-See [.kiro/KIRO-USAGE.md](.kiro/KIRO-USAGE.md) for detailed documentation on how Kiro assisted with:
-- Spec-driven development (12 milestones)
-- Steering rules for architecture consistency
-- Property-based testing (71 tests)
-- Bug detection & fixes
-
-**Time saved: 75%** (36h manual → 9h with Kiro)
+Spellbook does one thing: generate MCP tools from APIs you have actually tested.
 
 ---
 
-## 🚀 Roadmap
+## FAQ
 
-Features planned for future updates:
+**Can I just test manually after generating?**
 
-| Feature | Description |
-|---------|-------------|
-| **Auto-register to mcp.json** | Automatically add generated tools to your MCP config |
-| **npm install automation** | Run npm install after generating files |
-| **Edit existing spells** | Modify spells from the Grimoire sidebar |
-| **Multi-tool servers** | Generate servers with multiple tools |
-| **Authentication templates** | Built-in OAuth, API key, and Bearer token support |
-| **Import from OpenAPI** | Generate spells from OpenAPI/Swagger specs |
-| **Spell sharing** | Export/import spell definitions |
+You can. But then you already generated code based on guesses, deployed it, discovered the mismatch, and fixed it. Spellbook frontloads that discovery to before generation.
 
-> **Note:** These features will only be introduced once the Kiroween winners have been finalized, to maintain complete honesty, avoid any unfair advantage, and keep the competition fully transparent.
+**Does this replace AI coding assistants?**
 
-Have a feature request? [Open an issue](https://github.com/MouadAssouam/Spellbook/issues)!
+No. Use AI for the complex logic. Use Spellbook for the API integration parts. They work together.
+
+**What about authenticated APIs?**
+
+Set your auth type in the UI (API key, Bearer token, OAuth). Spellbook reads credentials from your environment variables during testing.
+
+**What if the API requires a body?**
+
+The UI lets you provide test values for URL parameters and request bodies.
 
 ---
 
-## 📄 License
+## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT

@@ -66,14 +66,22 @@ const actionArb = fc.oneof(
   fc.record({ type: fc.constant('script' as const), config: scriptConfigArb })
 );
 
-/** Generate valid spells */
-const validSpellArb = fc.record({
-  id: uuidArb,
+/** Generate valid tool definitions */
+const toolArb = fc.record({
   name: validNameArb,
   description: validDescriptionArb,
   inputSchema: fc.constant({}),
   outputSchema: fc.constant({}),
   action: actionArb
+});
+
+/** Generate valid spells */
+const validSpellArb = fc.record({
+  id: uuidArb,
+  name: validNameArb,
+  description: validDescriptionArb,
+  transport: fc.constantFrom('stdio', 'sse' as const),
+  tools: fc.array(toolArb, { minLength: 1 })
 });
 
 // ============================================================================
@@ -106,9 +114,14 @@ describe('SpellSchema', () => {
           id: '123e4567-e89b-12d3-a456-426614174000',
           name,
           description: 'A'.repeat(MIN_DESCRIPTION_LENGTH),
-          inputSchema: {},
-          outputSchema: {},
-          action: { type: 'http', config: { url: 'https://example.com', method: 'GET' } }
+          transport: 'stdio' as const,
+          tools: [{
+            name: 'valid-tool',
+            description: 'A'.repeat(MIN_DESCRIPTION_LENGTH),
+            inputSchema: {},
+            outputSchema: {},
+            action: { type: 'http' as const, config: { url: 'https://example.com', method: 'GET' as const } }
+          }]
         };
         const result = SpellSchema.safeParse(spell);
         expect(result.success).toBe(true);
@@ -153,9 +166,14 @@ describe('SpellSchema', () => {
             id: '123e4567-e89b-12d3-a456-426614174000',
             name: 'test-spell',
             description: 'A'.repeat(length),
-            inputSchema: {},
-            outputSchema: {},
-            action: { type: 'http', config: { url: 'https://example.com', method: 'GET' } }
+            transport: 'stdio' as const,
+            tools: [{
+              name: 'valid-tool',
+              description: 'A'.repeat(MIN_DESCRIPTION_LENGTH),
+              inputSchema: {},
+              outputSchema: {},
+              action: { type: 'http' as const, config: { url: 'https://example.com', method: 'GET' as const } }
+            }]
           };
           const result = SpellSchema.safeParse(spell);
           expect(result.success).toBe(true);
@@ -210,7 +228,7 @@ describe('HTTPConfigSchema', () => {
       'http://localhost:3000/{{path}}',
       'https://api.stripe.com/v1/{{resource}}'
     ];
-    
+
     validUrlsWithTemplates.forEach(url => {
       const config = { url, method: 'GET' as const };
       const result = HTTPConfigSchema.safeParse(config);

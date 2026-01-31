@@ -2,7 +2,7 @@
   "name": "spellbook-vscode",
   "displayName": "Spellbook - MCP Tool Builder",
   "description": "Visual MCP tool builder for VS Code and all forks",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "publisher": "MouadAssouam",
   "repository": {
     "type": "git",
@@ -14,8 +14,10 @@
   "categories": [
     "Other"
   ],
+  "activationEvents": [
+    "onView:spellbook-sidebar"
+  ],
   "icon": "logo.jpg",
-  "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -32,7 +34,8 @@
         {
           "type": "webview",
           "id": "spellbook.grimoireView",
-          "name": "Grimoire"
+          "name": "Grimoire",
+          "icon": "$(book)"
         }
       ]
     },
@@ -85,5 +88,8 @@
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^2.22.0",
     "esbuild": "^0.20.2"
+  },
+  "dependencies": {
+    "@spellbook/core": "*"
   }
 }

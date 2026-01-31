@@ -48,6 +48,8 @@ export const HTTPConfigSchema = z.object({
 export const ScriptConfigSchema = z.object({
   /** Execution runtime (currently only 'node') */
   runtime: z.literal('node'),
+  /** Execution security mode (default: isolated for safety) */
+  execution: z.enum(['unsafe', 'isolated']).default('isolated'),
   /** JavaScript code to execute */
   code: z.string().min(1, 'Code must not be empty')
 });
@@ -72,15 +74,57 @@ export const ActionSchema = z.discriminatedUnion('type', [
 ]);
 
 // ============================================================================
-// Spell Schema
+// Auth Schema
 // ============================================================================
 
 /**
- * Complete spell definition for generating an MCP tool.
+ * Configuration for OAuth 2.1 (Authorization Code Flow)
  */
-export const SpellSchema = z.object({
-  /** Unique identifier (UUID v4) */
-  id: z.string().uuid(),
+export const OAuth2ConfigSchema = z.object({
+  /** Client ID from the provider */
+  clientId: z.string().min(1, 'Client ID is required'),
+  /** Client Secret from the provider (optional if using env var) */
+  clientSecret: z.string().min(1, 'Client Secret is required').optional(),
+  /** Environment variable to read the client secret */
+  clientSecretEnvVar: z.string().min(1).default('CLIENT_SECRET'),
+  /** Authorization URL (where to redirect user) */
+  authUrl: z.string().url('Invalid Authorization URL'),
+  /** Token URL (where to swap code for token) */
+  tokenUrl: z.string().url('Invalid Token URL'),
+  /** Scopes (space separated) */
+  scopes: z.array(z.string()).default([]),
+  /** Environment variable to store the access token */
+  tokenEnvVar: z.string().default('MCP_ACCESS_TOKEN')
+});
+
+/**
+ * Configuration for tool authentication.
+ * Defines how the tool authenticates with external services.
+ */
+export const AuthSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('apiKey'),
+    envVar: z.string().min(1, 'Environment variable name is required'),
+    headerKey: z.string().optional()
+  }),
+  z.object({
+    type: z.literal('bearer'),
+    envVar: z.string().min(1, 'Environment variable name is required')
+  }),
+  z.object({
+    type: z.literal('oauth2'),
+    config: OAuth2ConfigSchema
+  })
+]);
+
+// ============================================================================
+// Tool Definition Schema
+// ============================================================================
+
+/**
+ * Definition of a single tool within the MCP server.
+ */
+export const ToolDefinitionSchema = z.object({
   /** Tool name - kebab-case, 3-50 characters */
   name: z
     .string()
@@ -101,6 +145,36 @@ export const SpellSchema = z.object({
 });
 
 // ============================================================================
+// Spell Schema
+// ============================================================================
+
+/**
+ * Complete spell definition for generating an MCP tool.
+ * Represents an MCP server that creates one or more tools.
+ */
+export const SpellSchema = z.object({
+  /** Unique identifier (UUID v4) */
+  id: z.string().uuid(),
+  /** Server name - kebab-case, 3-50 characters */
+  name: z
+    .string()
+    .min(MIN_NAME_LENGTH, `Name must be at least ${MIN_NAME_LENGTH} characters`)
+    .max(MAX_NAME_LENGTH, `Name must be at most ${MAX_NAME_LENGTH} characters`)
+    .regex(NAME_PATTERN, 'Name must contain only letters, numbers, and hyphens'),
+  /** Server description - 100-500 characters */
+  description: z
+    .string()
+    .min(MIN_DESCRIPTION_LENGTH, `Description must be at least ${MIN_DESCRIPTION_LENGTH} characters`)
+    .max(MAX_DESCRIPTION_LENGTH, `Description must be at most ${MAX_DESCRIPTION_LENGTH} characters`),
+  /** Optional authentication configuration */
+  auth: AuthSchema.optional(),
+  /** Transport mode (default: 'stdio') */
+  transport: z.enum(['stdio', 'sse']).default('stdio'),
+  /** List of tools this server provides */
+  tools: z.array(ToolDefinitionSchema).min(1, 'At least one tool is required')
+});
+
+// ============================================================================
 // Inferred TypeScript Types
 // ============================================================================
 
@@ -115,6 +189,9 @@ export type Action = z.infer<typeof ActionSchema>;
 
 /** Complete spell definition */
 export type Spell = z.infer<typeof SpellSchema>;
+
+/** Tool definition */
+export type ToolDefinition = z.infer<typeof ToolDefinitionSchema>;
 
 // ============================================================================
 // Validation Helpers
@@ -132,11 +209,11 @@ export function validateSpell(data: unknown): {
   errors: Array<{ path: string; message: string; code: string }>;
 } {
   const result = SpellSchema.safeParse(data);
-  
+
   if (result.success) {
     return { success: true, data: result.data };
   }
-  
+
   return {
     success: false,
     errors: result.error.errors.map(e => ({

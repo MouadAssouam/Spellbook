@@ -6,11 +6,11 @@
  * Includes example spells, schema builder, progress indication,
  * quick actions, and enhanced error handling.
  * 
- * 🔮 Summon your MCP tools with style!
+ *  Summon your MCP tools with style!
  */
 
 import * as vscode from 'vscode';
-import { generateMCPServer } from '@spellbook/core';
+import { generateMCPServerV2 } from '@spellbook/core';
 import { randomUUID } from 'crypto';
 import { buildSchema } from '../utils/schema-builder';
 import { selectExample } from '../utils/examples';
@@ -25,17 +25,17 @@ export async function createSpellCommand() {
   // Check for workspace
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolder) {
-    vscode.window.showErrorMessage('📜 Please open a folder first to summon an MCP server');
+    vscode.window.showErrorMessage(' Please open a folder first to summon an MCP server');
     return;
   }
 
   try {
     // Ask: Start from example or create new?
     const startMode = await vscode.window.showQuickPick(
-      ['🆕 Create New Spell', '📚 Use Example Spell'],
-      { 
+      [' Create New Spell', ' Use Example Spell'],
+      {
         placeHolder: 'How would you like to begin?',
-        title: '🔮 Spellbook: Summon MCP Server'
+        title: ' Spellbook: Summon MCP Server'
       }
     );
     if (!startMode) return;
@@ -53,7 +53,7 @@ export async function createSpellCommand() {
 
       // Pre-fill from example (allow modification)
       const nameInput = await vscode.window.showInputBox({
-        prompt: '📛 Spell name (kebab-case, 3-50 characters)',
+        prompt: ' Spell name (kebab-case, 3-50 characters)',
         value: example.name,
         validateInput: validateSpellName
       });
@@ -61,21 +61,21 @@ export async function createSpellCommand() {
       name = nameInput;
 
       const descInput = await vscode.window.showInputBox({
-        prompt: '📝 Description (100-500 characters)',
+        prompt: ' Description (100-500 characters)',
         value: example.description,
         validateInput: validateDescription
       });
       if (!descInput) return;
       description = descInput;
 
-      action = example.action;
-      inputSchema = example.inputSchema;
-      outputSchema = example.outputSchema;
+      action = example.tools[0].action;
+      inputSchema = example.tools[0].inputSchema;
+      outputSchema = example.tools[0].outputSchema;
 
     } else {
       // Create new spell
       const nameInput = await vscode.window.showInputBox({
-        prompt: '📛 Spell name (kebab-case, 3-50 characters)',
+        prompt: ' Spell name (kebab-case, 3-50 characters)',
         placeHolder: 'github-fetcher',
         validateInput: validateSpellName
       });
@@ -83,7 +83,7 @@ export async function createSpellCommand() {
       name = nameInput;
 
       const descInput = await vscode.window.showInputBox({
-        prompt: '📝 Description (100-500 characters)',
+        prompt: ' Description (100-500 characters)',
         placeHolder: 'Fetches GitHub issues by repository and label. Useful for tracking bugs, features, and pull requests across multiple repositories.',
         validateInput: validateDescription
       });
@@ -92,7 +92,7 @@ export async function createSpellCommand() {
 
       // Select action type
       const actionType = await vscode.window.showQuickPick(
-        ['🌐 HTTP Request', '📜 JavaScript Script'],
+        [' HTTP Request', ' JavaScript Script'],
         { placeHolder: 'Select the spell\'s action type' }
       );
       if (!actionType) return;
@@ -100,7 +100,7 @@ export async function createSpellCommand() {
       if (actionType.includes('HTTP')) {
         // Collect HTTP details
         const url = await vscode.window.showInputBox({
-          prompt: '🔗 URL (supports {{variable}} placeholders)',
+          prompt: ' URL (supports {{variable}} placeholders)',
           placeHolder: 'https://api.github.com/repos/{{owner}}/{{repo}}/issues',
           validateInput: validateUrl
         });
@@ -117,7 +117,7 @@ export async function createSpellCommand() {
         const needHeaders = await vscode.window.showQuickPick(['No', 'Yes'], {
           placeHolder: 'Add HTTP headers?'
         });
-        
+
         if (needHeaders === 'Yes') {
           headers = {};
           while (true) {
@@ -143,7 +143,7 @@ export async function createSpellCommand() {
           const needBody = await vscode.window.showQuickPick(['No', 'Yes'], {
             placeHolder: 'Add request body?'
           });
-          
+
           if (needBody === 'Yes') {
             body = await vscode.window.showInputBox({
               prompt: 'Request body template (supports {{variable}} placeholders)',
@@ -164,7 +164,7 @@ export async function createSpellCommand() {
       } else {
         // Collect script details
         const code = await vscode.window.showInputBox({
-          prompt: '💻 JavaScript code (receives "input" parameter)',
+          prompt: ' JavaScript code (receives "input" parameter)',
           placeHolder: 'return { result: input.value * 2 };',
           validateInput: (value: string) => {
             if (!value) return 'Code is required';
@@ -178,7 +178,8 @@ export async function createSpellCommand() {
           type: 'script' as const,
           config: {
             runtime: 'node' as const,
-            code
+            code,
+            execution: 'isolated' as const
           }
         };
       }
@@ -193,9 +194,14 @@ export async function createSpellCommand() {
       id: randomUUID(),
       name,
       description,
-      inputSchema: inputSchema as any,
-      outputSchema: outputSchema as any,
-      action
+      transport: 'stdio' as const,
+      tools: [{
+        name,
+        description,
+        inputSchema: inputSchema as any,
+        outputSchema: outputSchema as any,
+        action
+      }]
     };
 
     // Check for duplicate spell (Self-Enforcing Architecture)
@@ -204,15 +210,15 @@ export async function createSpellCommand() {
       await vscode.workspace.fs.stat(existingSpellDir);
       // Directory exists - spell already created
       const overwrite = await vscode.window.showWarningMessage(
-        `❌ Spell "${name}" already exists in this workspace.`,
+        ` Spell "${name}" already exists in this workspace.`,
         'Overwrite',
         'Cancel'
       );
       if (overwrite !== 'Overwrite') {
-        log(`⚠️ Spell creation cancelled: "${name}" already exists`);
+        log(` Spell creation cancelled: "${name}" already exists`);
         return;
       }
-      log(`⚠️ Overwriting existing spell: ${name}`);
+      log(` Overwriting existing spell: ${name}`);
     } catch {
       // Directory doesn't exist - good to proceed
     }
@@ -226,13 +232,13 @@ export async function createSpellCommand() {
 
     await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
-      title: "🔮 Summoning Spell...",
+      title: " Summoning Spell...",
       cancellable: true
     }, async (progress, token) => {
       // Handle cancellation
       token.onCancellationRequested(() => {
         cancelled = true;
-        log(`⚠️ Spell creation cancelled by user: ${name}`);
+        log(` Spell creation cancelled by user: ${name}`);
       });
 
       // Step 1: Validate
@@ -243,13 +249,13 @@ export async function createSpellCommand() {
       // Step 2: Generate
       progress.report({ message: "Conjuring MCP server files..." });
       if (cancelled) return;
-      const files = generateMCPServer(spell);
+      const files = generateMCPServerV2(spell);
       logFileGeneration(Object.keys(files));
 
       // Step 3: Write files
       progress.report({ message: "Inscribing files to workspace..." });
       if (cancelled) return;
-      
+
       spellDir = vscode.Uri.joinPath(workspaceFolder.uri, name);
       await vscode.workspace.fs.createDirectory(spellDir);
 
@@ -262,7 +268,7 @@ export async function createSpellCommand() {
 
       // Step 4: Complete
       if (!cancelled) {
-        progress.report({ message: "✨ Spell summoned!" });
+        progress.report({ message: " Spell summoned!" });
         logSuccess(name, spellDir.fsPath);
       }
     });
@@ -271,7 +277,7 @@ export async function createSpellCommand() {
     if (cancelled && spellDir) {
       try {
         await vscode.workspace.fs.delete(spellDir, { recursive: true });
-        log(`🧹 Cleaned up partial files for cancelled spell: ${name}`);
+        log(` Cleaned up partial files for cancelled spell: ${name}`);
       } catch {
         // Ignore cleanup errors
       }
@@ -282,7 +288,7 @@ export async function createSpellCommand() {
 
     // Show success with quick actions
     const action_choice = await vscode.window.showInformationMessage(
-      `✨ Spell "${name}" has been summoned!`,
+      ` Spell "${name}" has been summoned!`,
       'Open README',
       'Open Terminal',
       'Copy Config'
@@ -295,7 +301,7 @@ export async function createSpellCommand() {
       await vscode.window.showTextDocument(doc);
     } else if (action_choice === 'Open Terminal') {
       const terminal = vscode.window.createTerminal({
-        name: `🔮 ${name}`,
+        name: ` ${name}`,
         cwd: vscode.Uri.joinPath(workspaceFolder.uri, name)
       });
       terminal.show();
@@ -310,19 +316,19 @@ export async function createSpellCommand() {
         }
       }, null, 2);
       await vscode.env.clipboard.writeText(config);
-      vscode.window.showInformationMessage('📋 MCP config copied to clipboard!');
+      vscode.window.showInformationMessage(' MCP config copied to clipboard!');
     }
 
   } catch (err) {
     // Enhanced error handling
     const errorMessage = err instanceof Error ? err.message : String(err);
     error('Failed to create spell', err instanceof Error ? err : undefined);
-    
+
     const action = await vscode.window.showErrorMessage(
-      `❌ Failed to summon spell: ${errorMessage}`,
+      ` Failed to summon spell: ${errorMessage}`,
       'Show Details'
     );
-    
+
     if (action === 'Show Details') {
       showOutput();
     }

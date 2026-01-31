@@ -95,7 +95,7 @@ async function parseTimesheet(timesheetPath) {
 }
 
 async function generateMetrics() {
-  console.log('🔮 Generating Spellbook metrics...\n');
+  console.log(' Generating Spellbook metrics...\n');
 
   const kiroFeatures = await countKiroFeatures(CONVERSATIONS_DIR);
   const codeMetrics = await countCodeLines(ROOT);
@@ -124,11 +124,11 @@ async function generateMetrics() {
 
   await writeFile(OUTPUT_PATH, JSON.stringify(metrics, null, 2));
 
-  console.log('📊 Metrics Summary:');
+  console.log(' Metrics Summary:');
   console.log(`   Total lines: ${metrics.code_metrics.total_lines}`);
   console.log(`   Kiro generated: ${metrics.code_metrics.kiro_percentage}%`);
   console.log(`   Time saved: ${metrics.time_metrics.time_saved}h (${metrics.time_metrics.efficiency_gain}%)`);
-  console.log(`\n✅ Saved to ${OUTPUT_PATH}`);
+  console.log(`\n Saved to ${OUTPUT_PATH}`);
 }
 
 generateMetrics().catch(console.error);

@@ -1,10 +1,10 @@
-# 📚 Example Spells
+#  Example Spells
 
 This directory contains example spell definitions that demonstrate Spellbook's capabilities.
 
 ## Available Examples
 
-### 🐙 GitHub Fetcher (`github-fetcher.json`)
+###  GitHub Fetcher (`github-fetcher.json`)
 
 **Use Case:** Fetch issues from any GitHub repository.
 
@@ -21,7 +21,7 @@ Fetch issues from microsoft/vscode
 
 ---
 
-### 🌤️ Weather API (`weather-api.json`)
+###  Weather API (`weather-api.json`)
 
 **Use Case:** Get current weather data for any city.
 
@@ -40,7 +40,7 @@ Get weather for London
 
 ---
 
-### 🧮 Calculator (`calculator.json`)
+###  Calculator (`calculator.json`)
 
 **Use Case:** Perform basic arithmetic operations.
 

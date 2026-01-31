@@ -3,50 +3,61 @@
  * Spellbook Generator Engine
  * 
  * Orchestrates spell validation and MCP server file generation.
- * Combines types and templates into a complete generation system.
+ * 
+ * V1 (Legacy): Uses templates.ts - string concatenation
+ * V2 (Recommended): Uses AST compiler - proper AST transformation
  */
 
 import { Spell, SpellSchema } from './types.js';
-import { templates } from './templates.js';
+import { templates } from './templates.legacy.js';
+import { compileSpell, type CompilerOptions } from './compiler/index.js';
 
 // ============================================================================
-// Generator Function
+// V2 Generator (AST Compiler) - RECOMMENDED
 // ============================================================================
 
 /**
- * Generates all files needed for an MCP server from a spell definition.
+ * Generates MCP server files using the AST compiler.
  * 
- * This is the main entry point for MCP server generation. It validates
- * the spell definition and produces all necessary files ready for deployment.
+ * This is the recommended approach using proper AST transformation
+ * with configurable compilation passes.
+ * 
+ * @param spell - Spell definition to generate MCP server from
+ * @param options - Compiler options (telemetry, resilience, etc.)
+ * @returns Object mapping filenames to file contents
+ */
+export function generateMCPServerV2(
+  spell: Spell,
+  options?: CompilerOptions
+): Record<string, string> {
+  const result = compileSpell(spell, options);
+
+  if (!result.success) {
+    throw new Error(`Compilation failed: ${result.errors?.join(', ')}`);
+  }
+
+  return result.files!;
+}
+
+// ============================================================================
+// V1 Generator (Templates) - LEGACY
+// ============================================================================
+
+/**
+ * @deprecated Use generateMCPServerV2() which uses the AST compiler.
+ * This function will be removed in a future version.
+ * 
+ * Generates all files needed for an MCP server from a spell definition.
+ * Uses string template concatenation (legacy approach).
  * 
  * @param spell - Spell definition to generate MCP server from
  * @returns Object mapping filenames to file contents
  * @throws {ZodError} If spell validation fails
- * 
- * @example
- * ```typescript
- * const spell: Spell = {
- *   id: '123e4567-e89b-12d3-a456-426614174000',
- *   name: 'github-fetcher',
- *   description: 'Fetches GitHub issues...',
- *   inputSchema: { type: 'object', properties: { repo: { type: 'string' } } },
- *   outputSchema: { type: 'array' },
- *   action: { type: 'http', config: { url: 'https://api.github.com', method: 'GET' } }
- * };
- * 
- * const files = generateMCPServer(spell);
- * // files = {
- * //   'Dockerfile': '...',
- * //   'package.json': '...',
- * //   'index.js': '...',
- * //   'README.md': '...'
- * // }
- * ```
  */
 export function generateMCPServer(spell: Spell): Record<string, string> {
   // Validate spell (throws ZodError if invalid)
   const validated = SpellSchema.parse(spell);
-  
+
   // Generate all files using templates
   const files = {
     'Dockerfile': templates.dockerfile(validated),
@@ -54,6 +65,11 @@ export function generateMCPServer(spell: Spell): Record<string, string> {
     'index.js': templates.serverCode(validated),
     'README.md': templates.readme(validated)
   };
-  
+
+  const authScript = templates.oauthSetup(validated);
+  if (authScript) {
+    (files as any)['setup-auth.js'] = authScript;
+  }
+
   return files;
 }

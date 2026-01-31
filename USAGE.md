@@ -1,33 +1,33 @@
-# 🔮 How to Use Spellbook
+#  How to Use Spellbook
 
-This guide walks you through creating your first MCP tool with Spellbook — from zero to working tool in minutes.
+This guide walks you through creating your first MCP tool with Spellbook  -  from zero to working tool in minutes.
 
 **Three ways to use Spellbook:**
-- [Method 1: VS Code Extension](#method-1-vs-code-extension-sidebar) — Visual UI, best for beginners
-- [Method 2: MCP Tool via Kiro](#method-2-mcp-tool-conversational) — Ask Kiro to create spells for you
-- [Method 3: npm Library](#method-3-npm-library-programmatic) — Integrate into your own tools
+- [Method 1: VS Code Extension](#method-1-vs-code-extension-sidebar)  -  Visual UI, best for beginners
+- [Method 2: MCP Tool via Kiro](#method-2-mcp-tool-conversational)  -  Ask Kiro to create spells for you
+- [Method 3: npm Library](#method-3-npm-library-programmatic)  -  Integrate into your own tools
 
 ---
 
 ## Method 1: VS Code Extension (Sidebar)
 
-The visual way — perfect if you want to see what you're building.
+The visual way  -  perfect if you want to see what you're building.
 
 ### Step 1: Open the Grimoire Sidebar
 
-Click the 🔮 **Spellbook icon** in the Activity Bar (left side of VS Code/Kiro).
+Click the  **Spellbook icon** in the Activity Bar (left side of VS Code/Kiro).
 
 <!-- TODO: Screenshot of activity bar with Spellbook icon highlighted -->
 
 You'll see the Haunted Grimoire sidebar with two tabs:
-- **📜 Grimoire** — Your saved spells
-- **🕯️ Conjure** — Create new spells
+- ** Grimoire**  -  Your saved spells
+- ** Conjure**  -  Create new spells
 
 ### Step 2: Start Creating a Spell
 
-Click the **"🕯️ Conjure"** tab. You'll see the spell creation form.
+Click the **" Conjure"** tab. You'll see the spell creation form.
 
-**Quick start:** Click one of the example buttons (🐙 GitHub, 🌤️ Weather, 🧮 Calculator) to pre-fill the form with a working example.
+**Quick start:** Click one of the example buttons ( GitHub,  Weather,  Calculator) to pre-fill the form with a working example.
 
 ### Step 3: Fill in the Spell Details
 
@@ -65,23 +65,23 @@ Click **"+ Add Ingredient"** for each input your spell needs:
 
 | Name | Type | Required |
 |------|------|----------|
-| `owner` | string | ✅ |
-| `repo` | string | ✅ |
+| `owner` | string |  |
+| `repo` | string |  |
 
 These become the inputs users provide when calling your tool.
 
-### Step 6: Summon the Spell! 🕯️
+### Step 6: Summon the Spell! 
 
-Click **"🕯️ SUMMON FROM THE VOID 🕯️"**
+Click **" SUMMON FROM THE VOID "**
 
 Spellbook generates 4 files in your workspace:
 
 ```
 github-issue-fetcher/
-├── Dockerfile        # Container configuration
-├── package.json      # Dependencies
-├── index.js          # MCP server code
-└── README.md         # Usage instructions
+ Dockerfile        # Container configuration
+ package.json      # Dependencies
+ index.js          # MCP server code
+ README.md         # Usage instructions
 ```
 
 ### Step 7: Build and Use Your Spell
@@ -110,7 +110,7 @@ Add to your `.kiro/settings/mcp.json`:
 
 ## Method 2: MCP Tool (Conversational)
 
-The meta way — use Kiro to create MCP tools through conversation.
+The meta way  -  use Kiro to create MCP tools through conversation.
 
 ### Step 1: Add Spellbook to Your MCP Config
 
@@ -162,7 +162,7 @@ The files are generated in your workspace. Build and configure as shown in Metho
 
 ## Method 3: npm Library (Programmatic)
 
-The developer way — integrate Spellbook into your own tools.
+The developer way  -  integrate Spellbook into your own tools.
 
 ### Step 1: Install the Package
 
@@ -229,7 +229,7 @@ for (const [filename, content] of Object.entries(files)) {
   writeFileSync(`${outputDir}/${filename}`, content);
 }
 
-console.log(`✨ Spell generated at ${outputDir}/`);
+console.log(` Spell generated at ${outputDir}/`);
 ```
 
 ### Step 5: Validate Before Generating (Optional)
@@ -384,7 +384,7 @@ Make sure you're using `{{variableName}}` syntax (double curly braces) and the v
 ## What's Next?
 
 - Check out [examples/](./examples/) for more spell definitions
-- Read the [architecture docs](./README.md#️-architecture) to understand how Spellbook works
+- Read the [architecture docs](./README.md#-architecture) to understand how Spellbook works
 - See [KIRO-USAGE.md](./.kiro/KIRO-USAGE.md) for how this project was built with Kiro
 
-**Happy spell casting! 🔮✨**
+**Happy spell casting! **
