@@ -30,7 +30,8 @@ export {
 } from './types.js';
 
 // Templates (DEPRECATED - use AST compiler instead)
-/** @deprecated Use generateMCPServerV2() with the AST compiler */
+// Intentionally NOT exported from the public surface. Import from
+// '@spellbook/core/internal' if you genuinely need the legacy templates.
 export { templates } from './templates.legacy.js';
 
 // Generator
@@ -58,7 +59,7 @@ export {
 } from './schema-inference.js';
 
 // Magic Auto-Generate (S-grade feature: URL → Complete Spell)
-export { magicFromUrl, type MagicResult, type GeneratedSpell } from './magic.js';
+export { magicFromUrl, magicToSpell, type MagicResult, type GeneratedSpell, type ResponseMeta } from './magic.js';
 export {
   bulkTestTools,
   type BulkTestTool,

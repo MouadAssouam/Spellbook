@@ -46,6 +46,11 @@
         "icon": "$(add)"
       },
       {
+        "command": "spellbook.generateFromUrl",
+        "title": "Spellbook: Generate from URL",
+        "icon": "$(link)"
+      },
+      {
         "command": "spellbook.openGrimoire",
         "title": "Spellbook: Open Grimoire",
         "icon": "$(book)"
@@ -69,9 +74,23 @@
           "group": "navigation"
         }
       ],
+      "commandPalette": [
+        {
+          "command": "spellbook.createSpell",
+          "when": "workbenchState != empty"
+        },
+        {
+          "command": "spellbook.generateFromUrl",
+          "when": "workbenchState != empty"
+        }
+      ],
       "explorer/context": [
         {
           "command": "spellbook.createSpell",
+          "group": "navigation"
+        },
+        {
+          "command": "spellbook.generateFromUrl",
           "group": "navigation"
         }
       ]

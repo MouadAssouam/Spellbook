@@ -3,7 +3,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { magicFromUrl } from './magic.js';
+import { magicFromUrl, magicToSpell, type GeneratedSpell } from './magic.js';
+import { SpellSchema } from './types.js';
 
 describe('magicFromUrl', () => {
     beforeEach(() => {
@@ -266,5 +267,93 @@ describe('magicFromUrl', () => {
 
             expect(result.spell?.tool.description).toContain('Verified working');
         });
+    });
+});
+
+describe('magicToSpell', () => {
+    // A representative GeneratedSpell as produced by a successful magicFromUrl().
+    const generated: GeneratedSpell = {
+        name: 'get-users',
+        description: 'MCP server for github API integration. Schema inferred from real API response.'.padEnd(100, '.'),
+        tool: {
+            name: 'get-users',
+            description: 'Fetches users from github. Verified working.'.padEnd(100, '.'),
+            method: 'GET',
+            url: 'https://api.github.com/users/{{username}}',
+            parameters: [
+                { name: 'username', type: 'string', required: true }
+            ],
+            outputSchema: {
+                type: 'object',
+                properties: { id: { type: 'integer' }, login: { type: 'string' } }
+            }
+        }
+    };
+
+    it('produces a schema-valid Spell', () => {
+        const spell = magicToSpell(generated);
+        const parsed = SpellSchema.safeParse(spell);
+        expect(parsed.success).toBe(true);
+    });
+
+    it('maps URL parameters into the input schema', () => {
+        const spell = magicToSpell(generated);
+        expect(spell.tools[0].inputSchema).toEqual({
+            type: 'object',
+            properties: { username: { type: 'string' } },
+            required: ['username']
+        });
+    });
+
+    it('produces an empty input schema when there are no parameters', () => {
+        const noParams: GeneratedSpell = { ...generated, tool: { ...generated.tool, parameters: [] } };
+        const spell = magicToSpell(noParams);
+        expect(spell.tools[0].inputSchema).toEqual({
+            type: 'object',
+            properties: {}
+        });
+    });
+
+    it('preserves the output schema and HTTP action', () => {
+        const spell = magicToSpell(generated);
+        expect(spell.tools[0].outputSchema).toEqual(generated.tool.outputSchema);
+        expect(spell.tools[0].action).toEqual({
+            type: 'http',
+            config: { url: generated.tool.url, method: 'GET' }
+        });
+    });
+
+    it('generates a fresh UUID id each call', () => {
+        const a = magicToSpell(generated);
+        const b = magicToSpell(generated);
+        expect(a.id).not.toBe(b.id);
+        // And it's a valid UUID v4 format
+        expect(a.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    });
+
+    it('applies name/description overrides', () => {
+        const spell = magicToSpell(generated, { name: 'custom-tool', description: 'A custom description that is long enough to pass validation.'.padEnd(100, '.') });
+        expect(spell.name).toBe('custom-tool');
+        expect(spell.description).toContain('custom description');
+    });
+
+    it('end-to-end: magicFromUrl result feeds straight into magicToSpell', async () => {
+        vi.stubGlobal('fetch', vi.fn());
+        vi.mocked(fetch).mockResolvedValue({
+            ok: true,
+            status: 200,
+            headers: new Map([['content-type', 'application/json']]) as any,
+            json: async () => ({ id: 1, name: 'test' })
+        } as Response);
+
+        const result = await magicFromUrl('https://api.github.com/users/{{username}}');
+        vi.unstubAllGlobals();
+
+        expect(result.success).toBe(true);
+
+        const spell = magicToSpell(result.spell!);
+        const parsed = SpellSchema.safeParse(spell);
+        expect(parsed.success).toBe(true);
+        expect(spell.tools[0].action.type).toBe('http');
     });
 });

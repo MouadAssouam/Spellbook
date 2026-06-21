@@ -8,6 +8,7 @@
 
 import * as vscode from 'vscode';
 import { createSpellCommand } from './commands/create-spell';
+import { generateFromUrlCommand } from './commands/generate-from-url';
 import { GrimoirePanel } from './webview/GrimoirePanel';
 import { GrimoireSidebarProvider } from './providers/GrimoireSidebarProvider';
 import { initLogger, log } from './utils/logger';
@@ -36,6 +37,12 @@ export function activate(context: vscode.ExtensionContext) {
     createSpellCommand
   );
 
+  // Register generate-from-URL command (magic flow: paste URL -> tested spell)
+  const generateFromUrlDisposable = vscode.commands.registerCommand(
+    'spellbook.generateFromUrl',
+    generateFromUrlCommand
+  );
+
   // Register open grimoire command (Webview Panel - fallback)
   const openGrimoireDisposable = vscode.commands.registerCommand(
     'spellbook.openGrimoire',
@@ -51,6 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     sidebarDisposable,
     createSpellDisposable,
+    generateFromUrlDisposable,
     openGrimoireDisposable,
     refreshSpellsDisposable
   );
